@@ -1,0 +1,87 @@
+
+# MdFOCuS simulations
+
+To run the 3-dimensional simulations, run in order the scripts:
+- 1-p3_avg_run_length.R
+- 2-p3_detection_delay.R
+
+To run the 5-dimensional simulations, run in order the scripts:
+- 3-p5_avg_run_length.R
+- 4-p5_detection_delay.R
+
+Once those have run, the code below generates the tables presented in the paper:
+
+## 3 dimentional sequences.
+
+```{r, include=FALSE}
+source("helper_functions.R")
+p <- 3
+N <- 5000
+file <- paste0("det_del_", "p", p, "N", N, ".RData")
+
+load(file)
+tot_res <- Reduce(rbind, runs_res)
+
+tot_summ <- tot_res %>% mutate(dd = est - 500, density = density * p) %>% 
+  group_by(magnitude, density, algo) %>%
+  summarise(avg_dd = mean(if_else(dd < 0, NA, dd), na.rm = T), sd_dd = sd(if_else(dd < 0, NA, dd), na.rm = T), fpr = mean(dd<0))
+```
+
+
+### Pre-change mean known
+
+Generates the latex tables:
+
+```{r echo=FALSE}
+tot_summ %>% 
+  filter(algo %in% c("FOCuS0", "md-FOCuS0", "ocd (ora)"), magnitude < 2) %>%
+  pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -c(fpr, sd_dd)) %>% xtable::xtable(digits = 2) %>% print(include.rownames = F)
+tot_summ %>% filter(algo %in% c("FOCuS0", "md-FOCuS0", "ocd (ora)"), magnitude < 2) %>% group_by(magnitude, algo) %>%
+  summarise(sd_dd = sd(sd_dd)) %>%
+  pivot_wider(names_from = algo, values_from = sd_dd)  %>% xtable::xtable() %>% xtable::xtable() %>% print(include.rownames = F)
+```
+
+### Pre-change mean unknown
+
+```{r echo=FALSE}
+tot_summ %>%
+  filter(algo %in% c("FOCuS", "md-FOCuS", "ocd (est)", "FOCuS0 (est)"), magnitude > 0.25) %>%
+  pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -c(fpr, sd_dd)) %>% xtable::xtable() %>% print(include.rownames = F)
+tot_summ %>% filter(algo %in% c("FOCuS", "md-FOCuS", "ocd (est)", "FOCuS0 (est)"), magnitude > 0.25) %>% group_by(magnitude, algo) %>%
+  summarise(sd_dd = sd(sd_dd)) %>%
+  pivot_wider(names_from = algo, values_from = sd_dd) %>% xtable::xtable() %>% print(include.rownames = F)
+```
+
+## 5 dimentional sequences.
+```{r, include=FALSE}
+source("helper_functions.R")
+p <- 5
+N <- 5000
+file <- paste0("det_del_", "p", p, "N", N, ".RData")
+
+load(file)
+tot_res <- Reduce(rbind, runs_res)
+
+tot_summ <- tot_res %>% mutate(dd = est - 500, density = density * p) %>% 
+  group_by(magnitude, density, algo) %>%
+  summarise(avg_dd = mean(if_else(dd < 0, NA, dd), na.rm = T), sd_dd = sd(if_else(dd < 0, NA, dd), na.rm = T), fpr = mean(dd<0))
+```
+
+### Pre-change mean known
+```{r echo=FALSE}
+tot_summ %>% 
+  filter(algo %in% c("FOCuS0", "md-FOCuS0", "ocd (ora)"), magnitude < 2) %>%
+  pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -c(fpr, sd_dd)) %>% xtable::xtable() %>% xtable::xtable() %>% print(include.rownames = F)
+tot_summ %>% filter(algo %in% c("FOCuS0", "md-FOCuS0", "ocd (ora)"), magnitude < 2) %>% group_by(magnitude, algo) %>%
+  summarise(sd_dd = sd(sd_dd)) %>%
+  pivot_wider(names_from = algo, values_from = sd_dd) %>% xtable::xtable() %>% xtable::xtable() %>% print(include.rownames = F)
+```
+### Pre-change mean unknown
+```{r echo=FALSE}
+tot_summ %>%
+  filter(algo %in% c("FOCuS", "md-FOCuS", "ocd (est)", "FOCuS0 (est)"), magnitude > 0.25) %>%
+  pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -c(fpr, sd_dd)) %>% xtable::xtable() %>% xtable::xtable() %>% print(include.rownames = F)
+tot_summ %>% filter(algo %in% c("FOCuS", "md-FOCuS", "ocd (est)", "FOCuS0 (est)"), magnitude > 0.25) %>% group_by(magnitude, algo) %>%
+  summarise(sd_dd = sd(sd_dd)) %>%
+  pivot_wider(names_from = algo, values_from = sd_dd) %>% xtable::xtable() %>% xtable::xtable() %>% print(include.rownames = F)
+```
