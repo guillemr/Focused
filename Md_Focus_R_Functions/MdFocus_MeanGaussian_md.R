@@ -153,9 +153,9 @@ FocusCH <- function(data,
       next_step_qhull <- common_ratio_step * list_cand$nb + common_difference_step
     }
 
-    ## if the optimal cost is over the threshold end the algorithm
-    if (list_cand$opt.cost[i] >= threshold) {
-      break;
+    ## if the (minus) optimal cost is over the threshold end the algorithm
+    if (- list_cand$opt.cost[i] >= threshold) {
+      break
     }
 
   }
