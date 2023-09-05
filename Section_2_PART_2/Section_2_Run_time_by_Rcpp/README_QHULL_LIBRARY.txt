@@ -48,10 +48,20 @@ otherwise you need:
 	to address of folder "libqhulcpp" (it contains .cpp files)
 
 
-	(b) PKG_LIBS= -L "/usr/local/lib/" -lqhull_r -lqhullcpp -lqhullstatic -lqhullstatic_r
+	(b) PKG_LIBS= -L "/usr/local/lib/" -lqhull_r -lqhullcpp -lqhullstatic_r
 	 
 	to address of folder "lib" (it contains libraries)
 
 
 (3) to install this package on your personal computer (or computing server).
 
+
+
+(4) R Checking : 
+
+	install.packages("remotes")
+	library(remotes)
+	remotes::install_github("lpishchagina/focus", force = TRUE)
+	ts_ <- generate_ts(type = "gauss", p = 2, n = 25, changes = NULL, means = matrix(0, ncol = 1, nrow = 2))
+	
+	getChangePoints(ts_, method = "FOCuS0", cost = "gauss", common_difference_step = 1, common_ratio_step = 2)
