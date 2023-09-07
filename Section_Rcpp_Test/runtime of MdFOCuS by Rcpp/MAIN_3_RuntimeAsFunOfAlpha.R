@@ -1,13 +1,7 @@
-#-----------------------------------------------------------------------------|
-# SECTION 2.3 A simple online algorithm                                       |
-#                                                                             |
-#-----------------------------------------------------------------------------|
-
 ################################################################################
-##  TEST 3: Empirical Time Complexity of MdFOCuS by Rcpp with alpha           ##
+##    Empirical Runtime of MdFOCuS0 by Rcpp as the function of alpha          ##
 ##    p-variate Independent Gaussian Model without change (p =2,3)            ##
 ################################################################################
-
 
 # Test description--------------------------------------------------------|
 # We generate ts ~ N(O,Ip)  with n = 10^5 data points (without change),   |
@@ -15,19 +9,19 @@
 # and estimate the runtimes of MdFOCuS0 by R/C++ package "focus".         |      
 #-------------------------------------------------------------------------|
 
-# Remark------------------------------------------------------------------|                              |
+# Remark------------------------------------------------------------------|                             
 # The test was performed using parallel computing on the server           |
 # The number of cores: mc.cores = nbSimus_, where                         |
-# nbSimus_ = 7 is the number of simulations.                              |
+# nbSimus_ = 100 is the number of simulations.                            |
 # The test results are saved in files :                                   |
 # 'Alpha_dependence_2_N_1e+05_FOCuS0_gauss_it_100_.txt' and               |
-# 'Alpha_dependence_3_N_1e+05_FOCuS0_gauss_it_100_.txt'                   |                                  |
+# 'Alpha_dependence_3_N_1e+05_FOCuS0_gauss_it_100_.txt'                   |                                  
 #-------------------------------------------------------------------------|
 
 #packages----------------------------------------------------------------|
 #install.packages("remotes")
-#library(remotes)
-#remotes::install_github("lpishchagina/focus", force = TRUE)
+library(remotes)
+remotes::install_github("lpishchagina/focus", force = TRUE)
 library(focus)
 library(parallel)
 
@@ -90,7 +84,7 @@ for (p in 1 : length(P)) {
                                        Beta_ = 1,
                                        Alpha_ = alpha_,
                                        first_step_qhull_ = 1
-      ), mc.cores = 7))
+      ), mc.cores = 100))##CHANGE FOR YOUR PC
   }
   #save result : average run time
   write.table(data.frame (alpha = Alpha, rowMeans(TableOfRuntime, na.rm = TRUE)), 

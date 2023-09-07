@@ -1,4 +1,3 @@
-
 ATTENTION : 
 
 The implementation of the MdFOCuS algorithm in R/C++ uses the Quickhull algorithm implemented in the C++ library "Qhull" (see link http://www.qhull.org), so before proceeding to use this implementation, make sure that this library is installed on your computer (or computing server).
@@ -62,6 +61,7 @@ otherwise you need:
 	install.packages("remotes")
 	library(remotes)
 	remotes::install_github("lpishchagina/focus", force = TRUE)
+	
 	ts_ <- generate_ts(type = "gauss", p = 2, n = 25, changes = NULL, means = matrix(0, ncol = 1, nrow = 2))
 	
 	getChangePoints(ts_, method = "FOCuS0", cost = "gauss", common_difference_step = 1, common_ratio_step = 2)

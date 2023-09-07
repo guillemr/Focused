@@ -1,17 +1,11 @@
-#-----------------------------------------------------------------------------|
-# APPENDIX   D Multidimensional Poisson Model                                 |
-# D.1 Empirical validation of the bound of the convex hull                    |
-#                                                                             |
-#-----------------------------------------------------------------------------|
-
 ################################################################################
-## TEST 1: CONVEX HULL. Facet and vertex number. Estimations                  ##
-##           p-variate Independent Poisson Model (p =1,..,5)                  ##
+##         CONVEX HULL. Facet and vertex number. Empirical Estimations        ##
+##          p-variate Gaussian and Poisson Models (p =1,..,5)                 ##
 ################################################################################
 
 
 # Test description--------------------------------------------------------|
-# We generate ts ~ P(1) in dimension p = 1,.., 5                          | 
+# We generate ts ~ N(O,Ip) (or P(1)) in dimension p = 1,.., 5                        
 # with n = 2^(10:23) data points (without changes)  and estimate          |
 # the number of vertices and facets of convex hull {P(ts_i)}_{i=1,..,n}   |
 # by the functions from the package "geometry".                           |    
@@ -22,8 +16,8 @@
 # The number of cores: mc.cores = nbSimus_, where                         |
 # nbSimus_ = 100 is the number of simulations.                            |
 # The test results are saved in files of the following type:              |
-# 'Fs_dim_p_poisson_nbSimus_.txt' (for facets) and                        |
-# 'Vs_dim_p_poisson_nbSimus_.txt'(for vertices)                           |                                                 |
+# 'Fs_dim_p_gauss_nbSimus_.txt' (for facets) and                          |
+# 'Vs_dim_p_poisson_nbSimus_.txt'(for vertices)                           |                                              
 #-------------------------------------------------------------------------|
 
 #packages----------------------------------------------------------------|
@@ -59,8 +53,8 @@ library(parallel)
 #' P <- 2
 #' Change <- N %/% 2
 #' theta0 <-  rep(0, P)
-#' ts_poisson <- generate_ts(type = "poisson", p = P, n = N, changes = Change,  means = matrix(c(theta0 + 1, theta0 + 5), nrow = P))
-#' ts_poisson0 <- generate_ts(type = "poisson", p = P, n = N, changes = NULL, means = matrix(1, ncol = 1, nrow = P))
+#' ts_gauss <- generate_ts(type = "gauss", p = P, n = N, changes = Change, means = matrix(c(theta0, theta0 + 5), nrow = P))
+#' ts_gauss0 <- generate_ts(type = "gauss", p = P, n = N, changes = NULL, means = matrix(0, ncol = 1, nrow = P))
 generate_ts <- function(type, p, n, changes, means, noise = 1) {
   #parameter's check----------------------------- 
   if (!type %in% c("gauss", "poisson"))
@@ -93,9 +87,6 @@ generate_ts <- function(type, p, n, changes, means, noise = 1) {
   return(res)
 }
 
-
-
-
 #' @title getCHparameters
 #'
 #' @description function returns number of facets and vertices of convex hull of ts ~ P_p(1)
@@ -104,18 +95,18 @@ generate_ts <- function(type, p, n, changes, means, noise = 1) {
 #' @param n_ number of data point of time series without changes.
 #' @param p_ parameter of dimension.
 #'
-#' @return number of facets and vertices of convex hull of ts ~ P_p(1).
+#' @return number of facets and vertices of convex hull of ts ~ N_p(O,1p).
 #'
 #' @examples
-#'getCHparameters(cnst_ = 1, n_ = 2^10, p_ = 1)
+#'getCHparameters(cnst_ = 1, n_ = 2^10, p_ = 2)
 
-getCHparameters <- function(cnst_, n_,p_) { 
+getCHparameters <- function(cnst_, n_,p_, cost_, mean_) { 
   set.seed(cnst_ + 10)
-  ts_ <- generate_ts(type = "poisson",
+  ts_ <- generate_ts(type = cost_,
                      p = p_,
                      n = n_,
                      changes = NULL,
-                     means = matrix(1, ncol = 1, nrow = p_))
+                     means = matrix(mean_, ncol = 1, nrow = p_))
   get_CH_points <- apply(cbind(1, ts_), 2, cumsum)
   get_CH <- convhulln(get_CH_points)
   get_nb_of_facets <- dim(get_CH)[1]
@@ -132,39 +123,44 @@ nbSimus_ <- 100
 #Time limit
 TimeLimit <- 600
 
+cost <- c ('gauss','poisson')
+mean <- c(0,1)
 #calculations-------------------------------------------------------------|
-for (p in 1 : length(dim_)) {
-  get_n <- NULL
-  get_res <- NULL
-  get_fs <- NULL
-  get_vs <- NULL
-
-  index <- 1
-  Time <- 0
-  while ((index <= length(n_)) && (Time <= TimeLimit)) {
-    N <- n_[index]
-    Time <- max(Time, system.time(
-      get_res <- do.call(cbind, parallel::mclapply(
-        1:nbSimus_, function(i) getCHparameters(cnst_ = i,
-                                                n_ = N,
-                                                p_ = dim_[p]
-        ), mc.cores = nbSimus_))
-    )[3])
-    get_n <- c(get_n, rep(N, nbSimus_) )
-    get_fs <- c(get_fs,get_res[1,])
-    get_vs <- c(get_vs,get_res[2,])
-
-    index <- index + 1
+for (cst in 1: length(cost)){
+  for (p in 1 : length(dim_)) {
+    get_n <- NULL
+    get_res <- NULL
+    get_fs <- NULL
+    get_vs <- NULL
+    
+    index <- 1
+    Time <- 0
+    while ((index <= length(n_)) && (Time <= TimeLimit)) {
+      N <- n_[index]
+      Time <- max(Time, system.time(
+        get_res <- do.call(cbind, parallel::mclapply(
+          1:nbSimus_, function(i) getCHparameters(cnst_ = i,
+                                                  n_ = N,
+                                                  p_ = dim_[p],
+                                                  cost_ = cost[cst],
+                                                  mean_ = mean[cst]
+          ), mc.cores = nbSimus_))
+      )[3])
+      get_n <- c(get_n, rep(N, nbSimus_) )
+      get_fs <- c(get_fs,get_res[1,])
+      get_vs <- c(get_vs,get_res[2,])
+      
+      index <- index + 1
+    }
+    #save
+    write.table(data.frame (n = get_n, fs=get_fs), 
+                paste('Fs_dim',dim_[p],cost[cst],nbSimus_,'.txt',sep = '_'),
+                row.names = TRUE, col.names = FALSE)
+    write.table(data.frame (n = get_n, vs=get_vs),
+                paste('Vs_dim',dim_[p],cost[cst], nbSimus_,'.txt',sep = '_') , 
+                row.names = TRUE, col.names = FALSE)
   }
-  #save
-  write.table(data.frame (n = get_n, fs=get_fs), 
-              paste('Fs_dim',dim_[p],'poisson',nbSimus_,'.txt',sep = '_'), 
-              row.names = TRUE, col.names = FALSE)
-  write.table(data.frame (n = get_n, vs=get_vs), 
-              paste('Vs_dim',dim_[p],'poisson', nbSimus_,'.txt',sep = '_'), 
-              row.names = TRUE, col.names = FALSE)
 }
-
 ################################################################################
 ########################### END ################################################
 ################################################################################
