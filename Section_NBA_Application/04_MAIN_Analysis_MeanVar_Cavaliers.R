@@ -17,12 +17,13 @@ library(base)
 library(RColorBrewer)
 library(scales)
 library(ggpubr) # for plot
-
+library(tidyverse)
 #include files------------------------------------------------------------|
 # ATTENTION: check the path to the directory
 source("../Md_Focus_R_Functions/MdFocus_MeanVarGaussian_1d.R")               # MdFOCuS for Gaussian Model(change in mean and variance)
 source("../Md_Focus_R_Functions/MdFocus_MeanGaussian_md.R")                # MdFOCuS for Gaussian Model(change in mean)
 source("04_Utils_For_Training.R")      # Pre-processing 1: Modeling dependencies and functions for time series generation
+source("04_Read_NBA.R")
 
 #parameters by default----------------------------------------------------|
 n         <- 10^3     # number of data points
@@ -32,46 +33,36 @@ minV      <- 1
 ## variance of home matches per team overall season much larger than 1
 
 
+
+
 #Get all matches and time---------------------------------------------------|
-# read table of games
-dat <- read.table("games.csv", sep = ",", header = T)
-dat <- dat[!is.na(dat$PTS_away), ]
-dat$YEAR  <- sapply(strsplit(dat$GAME_DATE_EST, split = "-"), function(x) as.integer(x[1]))
-dat$MONTH <- sapply(strsplit(dat$GAME_DATE_EST, split = "-"), function(x) as.integer(x[2]))
-dat$DAY   <- sapply(strsplit(dat$GAME_DATE_EST, split = "-"), function(x) as.integer(x[3]))
-dat <- dat[order(dat$YEAR, dat$MONTH, dat$DAY),  ]
+dat <- read.table("NBA_Regular_Season_2000_2022.csv", sep = ",", header = T)
 
-
-
-
-#Get id teams---------------------------------------------------------------|
-teams <- read.table("teams.csv", sep = ",", header = T)
-#include function of pre-processing 
-source("04_Read_NBA.R")
-
+#Variance of plus minus ---------------------------------------------------|
 #Get an estimate of the variance for all teams and all seasons
-all_var <- sapply(teams$NICKNAME, FUN=function(nickname){
-  dat_matches <- getData(nickname, dat, 2003, 2022) 
-  tapply(dat_matches$s_all, INDEX=dat_matches$SEASON, FUN=var)
-})
-summary(unlist(all_var))
-##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  86.74  148.76  169.85  174.35  197.88  335.28 
+all_variances_per_season <- unlist(lapply(unique(dat$slugTeam), FUN=function(slugTeam){
+  dat_team <- getDataTeam(slugTeam)
+  tapply(dat_team$plusminusTeam, INDEX=dat_team$yearSeason, FUN=var)
+}
+))
+
+
+summary(all_variances_per_season)
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  97.02  146.36  168.06  170.68  187.05  247.38 
 
 
 
-#parameters by default----------------------------------------------------|
-nickname <- "Cavaliers"   # team 
-first_season <- 2010      # time range
-last_season  <- 2018
+# read table of games for cavaliers
+dat_team <- getDataTeam("CLE")
+dat_team <- dat_team %>% filter(yearSeason > 2010 & yearSeason <= 2018)
+  
 
-dat_matches <- getData(nickname, dat, first_season, last_season) #  information of all matches of team in time range
-#dim(dat_matches)
-#[1] 854  10
-season_change <- which(diff(dat_matches$SEASON)!=0) # number of matches
+
+season_change <- which(diff(dat_team$yearSeason)!=0) # number of matches
 
 #Transformation of score for random walk --------------------------------| 
-x <- dat_matches[, "s_all"]     
+x <- dat_team$plusminusTeam
 data1  <- cbind(x, x^2)          
 
 #Detect change by MdFOCuS for Gaussian model (change in mean)------------| 
@@ -93,7 +84,7 @@ res_MeanAndVar <- FocusCH_var(data1,
 
 # Data frame with the colons: number of matches, optimal cost (cumsum) by Gaussian model(change in mean) 
 # and optimal cost (cumsum) by Gaussian model(change in mean and variance)
-data2 <- data.frame(nb_match = 1:nrow(dat_matches),
+data2 <- data.frame(nb_match = 1:nrow(dat_team),
                     cumsum_mean = -res_Mean$opt.cost, 
                     cumsum_meanandvar = -res_MeanAndVar$opt.cost)
 colnames(data2) <- c('Number of matches', 'Change in mean', 'Change in mean and variance')
@@ -219,9 +210,14 @@ dev.off()
 time_Mean <- sapply(thrs_Mean, FUN = function(thrs) min(c(which(thrs < -(res_Mean$opt.cost)), 10^3)))
 time_MeanAndVar <- sapply(thrs_MeanAndVar, FUN = function(thrs) min(c(which(thrs < -(res_MeanAndVar$opt.cost)), 10^3)))
 
+range(time_Mean)
+## [1]  330 1000
+range(time_MeanAndVar)
+## [1] 339 368
+
 ### percentage of simulation models for which the detecting is later with the mean model
 mean(time_Mean > time_MeanAndVar)
-### 0.9057971
+### 0.942029
 
 data3 <- data.frame(
   value = c(time_Mean, time_MeanAndVar),
@@ -257,59 +253,58 @@ dev.off()
 change_Mean <- sapply(time_Mean, FUN = function(t) res_Mean$opt.change[t])
 change_MeanAndVar<- sapply(time_MeanAndVar, FUN = function(t) res_MeanAndVar$opt.change[t])
 
-## always detect a change at 302 if detection...
-range(change_Mean, na.rm = T)
-unique(res_Mean$opt.change[335:nrow(data1)])
-#[1] 302 302
-range(change_MeanAndVar, na.rm = T)
-#[1] 302 302
-unique(res_Mean$opt.change[335:nrow(data1)])
-334+ which(res_MeanAndVar$opt.change[335:nrow(data1)] != 302)
+## always detect a change at 279 a bit after the start of the season at 312
+range(change_Mean, na.rm = T) ## 279
+unique(res_Mean$opt.change[320:nrow(dat_team)]) ## 279 
 
-# The detected change is not at the new season
-# 335 exactly match the beginning of the new season 2014
-season_change <- which(diff(dat_matches$SEASON)!=0)
-season_change[4] ## last match 2013
-#[1] 335
+range(change_MeanAndVar, na.rm = T) ## 279
+unique(res_MeanAndVar$opt.change[320:nrow(dat_team)]) ## 279 
 
-## From position 335 only change at 302 is ever opt
-unique(res_Mean$opt.change[335:nrow(dat_matches)])
-# [1] 302
-unique(res_MeanAndVar$opt.change[335:nrow(dat_matches)])
-# [1] 302 335 382
+season_change <- which(diff(dat_team$yearSeason)!=0)
+season_change[4] ## change between "2013-14" "2014-15" match 312
+
 #------------------------------------------------------------------------------|
 
 # Transformation of  the data as in e-detectors first to get convex-hull points
 #Convex-hull for e-detectors
 ### Win-rate
-x <- dat_matches[, "s_all"]
+x <- dat_team$plusminusTeam
 data_ <- cbind(1, x > 0 - 0.49)
 cs_data_ <- apply(data_, 2, cumsum)
 nb_point <- sapply(10:nrow(cs_data_), FUN = function(n) length(unique(as.vector(convhulln(cs_data_[1:n, ])))))
-range(nb_point) ## 4 to 18
-## 323, 380
+range(nb_point) ## 5 to 16 (compare to the number of lambda values used in e-detectors)
+
 
 sort(unique(as.vector(convhulln(cs_data_))))
-#[1]   1   2   8  14  60  77 191 203 269 302 323 380 764 770 844 854
+# [1]   1   4   7  53  70 176 246 279 300 324 351 626 639 640
 
 # Transformation of  the data as in e-detectors second to get convex-hull points
 m <- 0.494
-x <- dat_matches[, "s_all"]
+x <- dat_team$plusminusTeam
 x <- (x + 80)/160
 x <- x/m - 1
 data_ <- cbind(1, x, x^2) ## the one is for the mean-var 2:3 only for
 cs_data_ <- apply(data_, 2, cumsum)
 nb_point <- sapply(10:nrow(cs_data_), FUN = function(n) length(unique(as.vector(convhulln(cs_data_[1:n, 2:3])))))
-range(nb_point) ## 5 to 19
+range(nb_point) ## 5 to 18 (compare to the number of lambda values used in e-detectors)
+sort(unique(as.vector(convhulln(cs_data_[, 2:3]))))
+## closest to 312 : 300 and 351
+## [1]   1   4  37  65  70 176 246 279 300 351 624 626 632 639 64
 
-## closest 302 303 323 327 348 380 (closest to season change is 327)
+## Mean and Variance model
+nb_point <- sapply(10:nrow(cs_data_), FUN = function(n) length(unique(as.vector(convhulln(cs_data_[1:n, ])))))
+range(nb_point) ## 5 to 55
+sort(unique(as.vector(convhulln(cs_data_))))
+## closest to 312 : 300 and 319
+## [1]   1   2   4   7   8   9  10  11  15  16  37  40  48  51  53  65  67  69  70
+## [20]  72 150 158 176 184 195 246 264 266 279 280 300 304 319 350 351 353 356 392
+## [39] 396 554 566 595 597 624 625 626 632 633 635 639 640
 
+## all points on the hull for the mean and e-detector model should be on the
+## hull of the mean and variance model
 meanAndVar_Cand <- sort(unique(as.vector(convhulln(cs_data_))))
-## 302 323 327 380 (closest to season change is 327)
 mean_Cand <- sort(unique(as.vector(convhulln(cs_data_[, 1:2]))))
-## 302 323 380 (closest to season change is 323)
 eDetect_Cand <- sort(unique(as.vector(convhulln(cs_data_[, 2:3]))))
-length(eDetect_Cand) ## 16 only rather than 190 from computeBaseLine
 eDetect_Cand %in% meanAndVar_Cand
 mean_Cand %in% meanAndVar_Cand
 
@@ -319,14 +314,17 @@ mean_Cand %in% meanAndVar_Cand
 ### David Griffin Wikie : On February 6, 2014, he was named the acting general manager for the Cavaliers, after the firing of Chris Grant
 ### see https://en.wikipedia.org/wiki/David_Griffin_(basketball)
 ### Fairly good end of season from win better point difference and win-rate
-dat_matches[302:303, ]
+dat_team[279:280, ]
+#   yearSeason slugSeason     typeSeason   dateGame            nameTeam
+# 279       2014    2013-14 Regular Season 2014-02-05 Cleveland Cavaliers
+# 280       2014    2013-14 Regular Season 2014-02-07 Cleveland Cavaliers
 
 ################################################################################
 ##  Figure 6: Plus-Minus score of the Cavaliers from season 2013 to 2014 as a bar plot. 
 ## Losses are in light blue and wins are in dark blue. 
 ##Ends of seasons are represented with vertical dashed lines(grey) and seasons are shown on the bottom with grey arrows.              ##
 ################################################################################
-x_ <- dat_matches[, "s_all"]
+x_ <- dat_team$plusminusTeam
 match_nb <- (season_change[3] + 1): season_change[5]
 data <- data.frame(
   match_nb = match_nb ,
@@ -334,7 +332,7 @@ data <- data.frame(
   Game = c("Won", "Lost")[(x_[match_nb] > 0) + 1]
 )
 #get plot
-arrow_change <- 302+.5
+arrow_change <- 279+.5
 p <- ggplot(data, aes(x = match_nb, y = PTS_Differential, fill = Game)) +
   geom_bar(stat = "identity", position = "identity") +
   scale_fill_manual(values = c("#A6CEE3", "#1F78B4")) +
@@ -387,17 +385,16 @@ pdf(file = "figure/Figure_point_differential_2013_2014.pdf",  width = 10, height
 print(p)
 dev.off()
 
-t.test(x_[(season_change[3]+1):302], x_[303:season_change[4]])
-getMeanSd((season_change[3]+1):302, x_)
-getMeanSd(303:season_change[4], x_)
-getMeanSd((season_change[4]+1):season_change[5], x_)
+t.test(x_[(season_change[3]+1):279], x_[280:season_change[4]])
+## p-value of 0.016
+
 
 ################################################################################
 ## Figure 4: Plus-Minus score of the Cavaliers from season 2010 to season 2018 as a bar plot. 
 ## Losses are in light blue and wins are in dark blue.
 ## Ends of seasons are represented with vertical dashed lines and seasons are shown on the bottom with grey arrows.
 ################################################################################
-x_ <- dat_matches[, "s_all"]
+x_ <- dat_team$plusminusTeam
 match_nb <- 1:length(x_)
 data <- data.frame(
   match_nb = match_nb ,
@@ -405,7 +402,7 @@ data <- data.frame(
   Game = c("Won", "Lost")[(x_[match_nb] > 0)+1]
 )
 
-season_change <- which(diff(dat_matches$SEASON)!=0)
+season_change <- which(diff(dat_team$yearSeason)!=0) # number of matches
 season_change <- c(0, season_change, length(x_))
 p_all <- ggplot(data, aes(x = match_nb, y = PTS_Differential, fill = Game)) +
   geom_bar(stat = "identity", position = "identity") +
@@ -448,13 +445,7 @@ geom_text(aes(x = mean(season_change[1:2+3]), y = -47, label = paste0("", 2009+4
 pdf(file = "figure/Figure_Seasons_2010_2018.pdf",  width = 10, height = 4) 
 print(p_all)
 dev.off()
-##########################################################
-### Maximum number of candidate for e-detectors
-e_Detect_nb_cand <- sapply(10:nrow(dat_matches), FUN=function(i)
-length(unique(as.vector(convhulln(cs_data_[1:i, 2:3])))) )
-max(e_Detect_nb_cand)
-## 19 compare to 190 tested in the e-detectors paper (for SR and CUMSUM)
-## for SR 190 might be necessary for CUMSUM 19 should be sufficient
+
 
 
 

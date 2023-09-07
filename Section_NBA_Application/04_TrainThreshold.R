@@ -88,21 +88,13 @@ all_MeanAndVar[[suffix]] <-  unlist(mclapply(rep(n, n_mc),
 ### RESAMPLE FROM PAST NBA TEAM AND CAVALIERS
 
 # read table with id of teams
-teams <- read.table("teams.csv", sep = ",", header = T)
-team_id <- teams$TEAM_ID[teams$NICKNAME == "Cavaliers"] # get id of Cavaliers
+dat_past <- dat %>% filter(yearSeason <= 2010)
+past_all <- dat_past$plusminusTeam
 
-# read table with games
-dat <- read.table("games.csv", sep = ",", header = T)
-
-dat <- dat[!is.na(dat$PTS_away), ]
-past_all <- (dat$PTS_away - dat$PTS_home)[dat$SEASON <= 2009] # before 2010
-past_cavaliers_home <- (dat$PTS_home - dat$PTS_away)[dat$SEASON <= 2009 & dat$TEAM_ID_home == team_id]
-past_cavaliers_away <- (dat$PTS_away - dat$PTS_home)[dat$SEASON <= 2009 & dat$TEAM_ID_away == team_id]
-
-rm(teams, dat)
-
+dat_team_past <- dat_past %>% dplyr::filter(slugTeam == "CLE")
+past_all_team  <- dat_team_past$plusminusTeam
 #use all past games
-sim.data <- function(n) sample(c(-1, 1), replace = T, size = n) * sample(past_all, size = n, replace = T)
+sim.data <- function(n) sample(past_all, size = n, replace = T)
 suffix <- "ResamplePast_All"
 print(suffix) #remove?
 # Attention : use parallel calculations mc.cores = mc.cores
@@ -118,13 +110,10 @@ all_MeanAndVar[[suffix]] <-  unlist(mclapply(rep(n, n_mc),
   			min.size = min.size, 
   			minV = minV, 
   			mc.cores = mc.cores))
-#save   #@LUDA: I replaced file name ""out/all.." to "out_all..."
-save(all_Mean, file = file_mean)
-save(all_MeanAndVar, file = file_var)
+
 
 #use all past games of Cavaliers
-sim.data <- function(n)  sample(c(sample(past_cavaliers_home, size = trunc((n+1)/2),  replace = T), 
-                                  sample(past_cavaliers_away, size = trunc(n/2), replace = T)), replace = T)
+sim.data <- function(n) sample(past_all_team, size = n, replace = T)
 suffix <- "ResamplePast_Cavaliers"
 print(suffix) #remove?
 # Attention : use parallel calculations mc.cores = mc.cores
