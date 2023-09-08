@@ -51,14 +51,25 @@ summary(all_variances_per_season)
 ##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##  97.02  146.36  168.06  170.68  187.05  247.38 
 
+#Mean of plus minus ---------------------------------------------------|
+#Get an estimate of the mean plusminus per season
 
+  
+summary( tapply(dat$ptsTeam, INDEX=(dat$slugSeason), FUN=mean))
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  93.40   97.10   99.92  101.07  104.13  112.09 
 
 # read table of games for cavaliers
 dat_team <- getDataTeam("CLE")
 dat_team <- dat_team %>% filter(yearSeason > 2010 & yearSeason <= 2018)
-  
 
 
+## consecutive equal plus minus score  
+sum(diff(dat_team$plusminusTeam)==0)
+which(diff(dat_team$plusminusTeam)==0)
+sum(dat_team$plusminusTeam[1:638] == dat_team$plusminusTeam[2:639] & dat_team$plusminusTeam[1:638] == dat_team$plusminusTeam[3:640])
+
+## season change
 season_change <- which(diff(dat_team$yearSeason)!=0) # number of matches
 
 #Transformation of score for random walk --------------------------------| 
@@ -212,6 +223,7 @@ time_MeanAndVar <- sapply(thrs_MeanAndVar, FUN = function(thrs) min(c(which(thrs
 
 range(time_Mean)
 ## [1]  330 1000
+mean(time_Mean==1000)## = not detection
 range(time_MeanAndVar)
 ## [1] 339 368
 
@@ -300,6 +312,10 @@ sort(unique(as.vector(convhulln(cs_data_))))
 ## [20]  72 150 158 176 184 195 246 264 266 279 280 300 304 319 350 351 353 356 392
 ## [39] 396 554 566 595 597 624 625 626 632 633 635 639 640
 
+
+closest_to_312 <- sapply(10:nrow(cs_data_), FUN = function(n) min(abs(312 -unique(as.vector(convhulln(cs_data_[1:n, ])))) ))
+which(closest_to_312 == 0) + 9
+
 ## all points on the hull for the mean and e-detector model should be on the
 ## hull of the mean and variance model
 meanAndVar_Cand <- sort(unique(as.vector(convhulln(cs_data_))))
@@ -318,6 +334,13 @@ dat_team[279:280, ]
 #   yearSeason slugSeason     typeSeason   dateGame            nameTeam
 # 279       2014    2013-14 Regular Season 2014-02-05 Cleveland Cavaliers
 # 280       2014    2013-14 Regular Season 2014-02-07 Cleveland Cavaliers
+x <- dat_team$plusminusTeam
+before_change <- x[230:279]
+between_change_and_newseason <- x[280:312]
+
+mean(before_change)
+mean(between_change_and_newseason)
+t.test(before_change, between_change_and_newseason)
 
 ################################################################################
 ##  Figure 6: Plus-Minus score of the Cavaliers from season 2013 to 2014 as a bar plot. 
