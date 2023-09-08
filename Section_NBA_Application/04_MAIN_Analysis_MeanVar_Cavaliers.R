@@ -226,7 +226,7 @@ range(time_Mean)
 mean(time_Mean==1000)## = not detection
 range(time_MeanAndVar)
 ## [1] 339 368
-
+mean(time_MeanAndVar==1000)## = not detection
 ### percentage of simulation models for which the detecting is later with the mean model
 mean(time_Mean > time_MeanAndVar)
 ### 0.942029
