@@ -5,7 +5,7 @@
 
 # Test description--------------------------------------------------------|
 # We generate ts ~ N(O,Ip)  with n = 10^5 data points (without change),   |
-# p=2,3 and alpha= c(0,1,2,3,5,10,20,50,100,200,500)                      |
+# p=2,3 and alpha= c(1+2^(-4:0), 3, 2^(2:7))                              |
 # and estimate the runtimes of MdFOCuS0 by R/C++ package "focus".         |      
 #-------------------------------------------------------------------------|
 
@@ -66,7 +66,6 @@ Cost = 'gauss'
 #parameters---------------------------------------------------------------|
 N <-10^5
 P <-  c(2, 3)
-#Alpha <- c(0,1,1.25,1.5,1.75,2,2.5,3,5,10,20,30,50,100,200,300,500)
 Alpha <- c(1+2^(-4:0), 3, 2^(2:7))
 #number of simulations
 nbSimus_ <- 100
