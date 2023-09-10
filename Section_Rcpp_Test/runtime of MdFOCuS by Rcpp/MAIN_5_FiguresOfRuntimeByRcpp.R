@@ -3,7 +3,7 @@
 ##                      Gaussian Model (MdFOCuS0, p=2 and 3)                  ##
 ################################################################################
 # Remark------------------------------------------------------------------|
-# We use the results obtained in MAIN_3 and MAIN_4                                   |
+# We use the results obtained in MAIN_3 and MAIN_4                        |
 #-------------------------------------------------------------------------|
 
 #packages-----------------------------------------------------------------|
@@ -13,8 +13,7 @@ library(RColorBrewer)
 library(ggpubr)
 library(scales)
 #parameters---------------------------------------------------------------|
-#alpha_ <- c(0,1,1.25,1.5,1.75,2,2.5,3,5,10,20,30,50,100,200,300,500)
-alpha <- c(1+2^(-4:0), 3, 2^(2:7))
+alpha_ <- c(1+2^(-4:0), 3, 2^(2:7))
 N <-10^5
 NbSimus <- 100
 Method <-c("FOCuS0")
@@ -31,11 +30,11 @@ Plot <- ggplot(table_alpha, aes(x = table_alpha[, 1], y = table_alpha[, 2], colo
     geom_point(shape=1) +
     geom_line( linetype = "dashed") +
     ylab("Run time, seconds") +
-    xlab("Parameter \u03b1") +
-    scale_x_continuous(breaks=c(0,1,2,3,5,10,20,30,50,100,200,300,500),  trans = "log10",
-                       labels = c("0","1","2","3","5","10","20","30","50","100","200","300","500"))+
-    scale_y_continuous(breaks=c(0,1,5,10,20, 30, 60, 120, 180,300,600),  trans = "log10",
-                       labels = c('0','1','5','10','20', '30', '60', '120', '180','300','600')) +
+   xlab(expression(x= "Parameter "*alpha* "")) +
+    scale_x_continuous(breaks=c(1.0625,1.5,2,3,4,8,16,32,64,128),  trans = "log10",
+                       labels = c("1.0625","1.5","2","3","4","8","16","32","64","128")) +
+    scale_y_continuous(breaks=c(0,1,5,10,20, 30, 60, 120, 180),  trans = "log10",
+                       labels = c('0','1','5','10','20', '30', '60', '120', '180')) +
     theme_bw() +
     theme(text = element_text(size = 13),
           legend.title = element_text(size = 13),
@@ -45,9 +44,17 @@ Plot <- ggplot(table_alpha, aes(x = table_alpha[, 1], y = table_alpha[, 2], colo
   
 print(Plot)
 #save---------------------------------------------------------------------|
-pdf(file = "Figure_Gaussian_Model_Run_time_as_the function_of_alpha.pdf",  width = 8, height = 4)
+pdf(file = "Figure_Gaussian_Model_Run_time_as_the function_of_alpha.pdf",  width = 8, height = 3)
 print(Plot)
 dev.off()
+
+#ggsave(
+#  "Figure_Gaussian_Model_Run_time_as_the function_of_alpha.pdf",
+#  plot = Plot,
+#  width = 8,
+#  height = 3
+#)
+
 
 ################################################################################
 ##   Figure Runtime as the function of p. Gaussian Model                      ##                         
@@ -110,17 +117,21 @@ Plot2 <-  ggplot(test_res, aes(n))+
                      labels = c('1','5', '10','20', '30', '60', '120', "180")) +
   theme_bw()+
   scale_color_brewer(palette = 'Paired') +
-  geom_line(aes(y = test_res[,2],    linetype = "MdFOCuS0",color = "p = 1")) +
-  geom_line(aes(y = test_res[,3],    linetype = "MdFOCuS0",color= "p = 2")) +
-  geom_line(aes(y = test_res[,4],    linetype = "MdFOCuS0",color= "p = 3")) +
-  geom_line(aes(y = test_res[,5],    linetype = "MdFOCuS0",color= "p = 4")) +
-  geom_line(aes(y = test_res[,6],    linetype = "MdFOCuS0",color= "p = 5")) +
-  geom_line(aes(y = test_res[,7],linetype = "MdFOCuS", color = "p = 1")) +
-  geom_line(aes(y = test_res[,8],linetype = "MdFOCuS",color= "p = 2")) +
-  geom_line(aes(y = test_res[,9],linetype = "MdFOCuS",color= "p = 3")) +
-  geom_line(aes(y = test_res[,10],linetype = "MdFOCuS",color= "p = 4")) +
-  geom_line(aes(y = test_res[,11], linetype = "MdFOCuS",color= "p = 5")) +
-  labs(colour = "Dimension",  linetype = "Method") 
+  geom_line(aes(y = test_res[,2], linetype = "MdFOCuS0",color = "p = 1")) +
+  geom_line(aes(y = test_res[,3], linetype = "MdFOCuS0",color= "p = 2")) +
+  geom_line(aes(y = test_res[,4], linetype = "MdFOCuS0",color= "p = 3")) +
+  geom_line(aes(y = test_res[,5], linetype = "MdFOCuS0",color= "p = 4")) +
+  geom_line(aes(y = test_res[,6], linetype = "MdFOCuS0",color= "p = 5")) +
+  geom_line(aes(y = test_res[,7], linetype = "MdFOCuS", color = "p = 1")) +
+  geom_line(aes(y = test_res[,8], linetype = "MdFOCuS", color= "p = 2")) +
+  geom_line(aes(y = test_res[,9], linetype = "MdFOCuS", color= "p = 3")) +
+  geom_line(aes(y = test_res[,10], linetype = "MdFOCuS", color= "p = 4")) +
+  geom_line(aes(y = test_res[,11], linetype = "MdFOCuS", color= "p = 5")) +
+  labs(colour = "Dimension",  linetype = "Method") + 
+  theme(text = element_text(size = 13),
+        legend.title = element_text(size = 13),
+        legend.text=element_text(size = 13),
+        legend.position = "right")
 #SLOPE-------------------------------------------------------------------|
 logtest_res <- log10(test_res)
 #regression---------------------------------------------------------------|
@@ -133,10 +144,9 @@ for (i in 1:10){
 
 alpha <- unlist(alpha)
 alpha <- as.vector(alpha,'numeric')
-
-#[1] 1.010670 1.142203 1.196649 1.200193 1.186469 1.009385 1.113014 1.206233 1.185324 1.193623
+#1.038808 1.157248 1.222801 1.245924 1.137845 1.045247 1.158712 1.228089 1.244636 1.140385
 #save---------------------------------------------------------------------|
-pdf(file = "Figure_Gaussian_Model_Runtime.pdf",  width = 8, height = 4.5)
+pdf(file = "Figure_Gaussian_Model_Runtime.pdf",  width = 8, height = 4)
 print(Plot2)
 dev.off()
   
@@ -213,10 +223,14 @@ Plot3 <-  ggplot(test_res, aes(n)) +
   geom_line(aes(y = test_res[,9], linetype = "MdFOCuS",color= "p = 3")) +
   geom_line(aes(y = test_res[,10], linetype = "MdFOCuS",color= "p = 4")) +
   geom_line(aes(y = test_res[,11], linetype = "MdFOCuS",color= "p = 5")) +
-  labs(colour = "Dimension",  linetype = "Method") 
+  labs(colour = "Dimension",  linetype = "Method") +
+  theme(text = element_text(size = 13),
+        legend.title = element_text(size = 13),
+        legend.text=element_text(size = 13),
+        legend.position = "right")
 
 #save---------------------------------------------------------------------|
-pdf(file = "Figure_Poisson_Model_Runtime.pdf",  width = 8, height = 4.5)
+pdf(file = "Figure_Poisson_Model_Runtime.pdf",  width = 8, height = 4)
 print(Plot3)
 dev.off()
 
@@ -234,8 +248,8 @@ for (i in 1:10){
 alpha <- unlist(alpha)
 alpha <- as.vector(alpha,'numeric')
 alpha 
-#1.020770 1.130408 1.325574 1.209435 1.277722 1.020716 1.145979 1.148349 1.237407 1.290151
-
+# [1] 1.044838 1.161654 1.244333 1.259823 1.163840 1.057966 1.182293 1.264088
+#[9] 1.286759 1.193310
 ################################################################################
 ########################### END ################################################
 ################################################################################
