@@ -25,6 +25,13 @@ part_sum_k_n <- function(k,n){
 #read results-------------------------------------------------------------|
 results_fs <- list()
 results_vs <- list()
+#parameters---------------------------------------------------------------|
+degree <- 10:23
+n_ <-2^(degree)
+dim_ <- 1 : 5
+namedim_ <- paste("p =", dim_)
+#number of simulations
+nbSimus_ <- 100
 
 for (j in  1 : length(dim_)) {
   results_fs[[j]] <- read.table(file = paste('Fs_dim',dim_[j],"gauss",nbSimus_,'.txt',sep = '_'), row.names = 1)
@@ -71,7 +78,7 @@ Plot_FS <- ggplot(res_FS, aes(x = n, y = y, color = Dimension)) +
                   48 * part_sum_k_n(5,n)), linetype = "dashed", color = "#FB9A99") +
   scale_x_continuous("Number of data points, n-1", breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous("Number of facets, u\u2099", breaks=c(1,10,100,10^3, 10^4, 10^5, 10^6),  trans = "log10",
+  scale_y_continuous("Number of facets, Un", breaks=c(1,10,100,10^3, 10^4, 10^5, 10^6),  trans = "log10",
                      labels = scales::math_format(10^.x, format = log10)) +
   theme_bw() +
   theme(text = element_text(size = 13),
@@ -117,7 +124,7 @@ Plot_VS <- ggplot(res_VS, aes(x = n, y = y, color = Dimension)) +
                   2 * part_sum_k_n(1,n)),  linetype = "dashed", color = "#FB9A99") +
   scale_x_continuous("Number of data points, n-1", breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous("Number of vertices, v\u2099", breaks=c(1,10,100,10^3, 10^4),  trans = "log10",
+  scale_y_continuous("Number of vertices, Vn", breaks=c(1,10,100,10^3, 10^4),  trans = "log10",
                      labels = scales::math_format(10^.x, format = log10))+
   theme_bw() +
   theme(text = element_text(size = 13),
@@ -127,10 +134,10 @@ Plot_VS <- ggplot(res_VS, aes(x = n, y = y, color = Dimension)) +
   scale_color_brewer(palette = 'Paired')
 
 pdf(file = "Figure_Stirling_Gaussian_Model_Convex_hull_estimations.pdf",  width = 10, height = 4)
-par(mfrow=c(1,2))
-print(Plot_FS)
-print(Plot_VS)
-#ggarrange(Plot_FS, Plot_VS, ncol=2, common.legend = TRUE, legend = "right")
+#par(mfrow=c(1,2))
+#print(Plot_FS)
+#print(Plot_VS)
+ggarrange(Plot_FS, Plot_VS, ncol=2, common.legend = TRUE, legend = "right")
 dev.off()
 
 
@@ -184,7 +191,7 @@ Plot_FS <- ggplot(res_FS, aes(x = n, y = y, color = Dimension)) +
                   48 * part_sum_k_n(5,n)), linetype = "dashed", color = "#FB9A99") +
   scale_x_continuous("Number of data points, n-1", breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous("Number of facets, u\u2099", breaks=c(1,10,100,10^3, 10^4, 10^5, 10^6),  trans = "log10",
+  scale_y_continuous("Number of facets, Un", breaks=c(1,10,100,10^3, 10^4, 10^5, 10^6),  trans = "log10",
                      labels = scales::math_format(10^.x, format = log10)) +
   theme_bw() +
   theme(text = element_text(size = 13),
@@ -230,7 +237,7 @@ Plot_VS <- ggplot(res_VS, aes(x = n, y = y, color = Dimension)) +
                   2 * part_sum_k_n(1,n)),  linetype = "dashed", color = "#FB9A99") +
   scale_x_continuous("Number of data points, n-1", breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous("Number of vertices, v\u2099", breaks=c(1,10,100,10^3, 10^4),  trans = "log10",
+  scale_y_continuous("Number of vertices, Vn", breaks=c(1,10,100,10^3, 10^4),  trans = "log10",
                      labels = scales::math_format(10^.x, format = log10))+
   theme_bw() +
   theme(text = element_text(size = 13),
@@ -240,10 +247,10 @@ Plot_VS <- ggplot(res_VS, aes(x = n, y = y, color = Dimension)) +
   scale_color_brewer(palette = 'Paired')
 
 pdf(file = "Figure_Stirling_Poisson_Model_Convex_hull_estimations.pdf",  width = 10, height = 4)
-par(mfrow=c(1,2))
-print(Plot_FS)
-print(Plot_VS)
-#ggarrange(Plot_FS, Plot_VS, ncol=2, common.legend = TRUE, legend = "right")
+#par(mfrow=c(1,2))
+#print(Plot_FS)
+#print(Plot_VS)
+ggarrange(Plot_FS, Plot_VS, ncol=2, common.legend = TRUE, legend = "right")
 dev.off()
 ################################################################################
 ########################### END ################################################
