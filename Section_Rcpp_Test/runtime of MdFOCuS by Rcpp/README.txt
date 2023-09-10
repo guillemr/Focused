@@ -17,4 +17,4 @@ For each dimension we write the results in the table, where the first column is 
 This file generates the Figures 3 of this section by the results of MAIN_3 and MAIN_5
 
 
-(4)The results of our testing and the figures are available in the archive “Results_of_MAIN_3_4_5.zip”.
+(4)The results of our testing and the figures are available in the archive “Results_of_MAIN_3_4_5.zip” (Data obtained using Intel(R) Xeon(R) Gold 6252 CPU @ 2.10GHz processor).
