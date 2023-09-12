@@ -28,10 +28,9 @@ sapply(1:p, FUN=function(i){
 		}
 )
 
-## on an 11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz processor
+## on an Intel(R) Xeon(R) Gold 6252 CPU @ 2.10GHz processor
 ## elapsed elapsed elapsed 
-## 40.112  48.772 147.472 
-
+## 47.259  54.103 145.723 
                     
 
 
