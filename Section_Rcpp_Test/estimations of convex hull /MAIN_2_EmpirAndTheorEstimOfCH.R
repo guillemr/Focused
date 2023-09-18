@@ -219,7 +219,7 @@ res_VS <- data.frame(n = data_frame_VS$n,
                            data_frame_VS[, 5],
                            data_frame_VS[, 6]),
                      Dimension = rep(colnames(data_frame_VS[,-1]), each = nrow(data_frame_VS)))
-res_FS$u_n <-v_n
+res_VS$v_n <-v_n
 
 Plot_VS <- ggplot(res_VS, aes(x = n)) +
   geom_point(aes(y = y, color = Dimension), size = 1, shape = 1) +
