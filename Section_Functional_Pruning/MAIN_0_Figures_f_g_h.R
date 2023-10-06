@@ -36,9 +36,9 @@ Col = c("#A6CEE3", "#B2DF8A", "#FB9A99" )
 # A function in Gaussian case (change in mean)
 fun_A <- function(mu)  {mu^2}
 #f functions
-fun_f1 <-  function(mu) { return(a[1] * fun_A(mu) + 2 * b[1] * mu + c[1]) }
-fun_f2 <-  function(mu) { a[2] * fun_A(mu) + 2 * b[2] * mu + c[2] }
-fun_f3 <-  function(mu) { a[3] * fun_A(mu) + 2 * b[3] * mu + c[3] }
+fun_f1 <-  function(mu) { return(a[1] * fun_A(mu) - 2 * b[1] * mu + c[1]) }
+fun_f2 <-  function(mu) { a[2] * fun_A(mu) - 2 * b[2] * mu + c[2] }
+fun_f3 <-  function(mu) { a[3] * fun_A(mu) - 2 * b[3] * mu + c[3] }
 fun_f0max <- function(mu) { pmax(fun_f1(mu),
                                 fun_f2(mu)
 ) }
@@ -69,9 +69,9 @@ fun_pr_f3 <- function (mu, nb_f = 3) {
 }
 #------------------------------
 #Linearization : g functions
-fun_g1 <-  function(mu, lambda) { a[1] * lambda + 2 * b[1] * mu + c[1] }
-fun_g2 <-  function(mu, lambda) { a[2] * lambda + 2 * b[2] * mu + c[2] }
-fun_g3 <-  function(mu, lambda) { a[3] * lambda + 2 * b[3] * mu + c[3] }
+fun_g1 <-  function(mu, lambda) { a[1] * lambda - 2 * b[1] * mu + c[1] }
+fun_g2 <-  function(mu, lambda) { a[2] * lambda - 2 * b[2] * mu + c[2] }
+fun_g3 <-  function(mu, lambda) { a[3] * lambda - 2 * b[3] * mu + c[3] }
 fun_gmax <- function(mu, lambda) { pmax (fun_g1(mu,lambda),
                                          fun_g2(mu,lambda),
                                          fun_g3(mu,lambda)
@@ -117,19 +117,6 @@ fun_pr_g3 <- function (mu, lambda) {
   res[ res  == 0] <- "3"  
   return (res)
 }
-#---------------------------------
-#normal vectors of h
-normal <- function(A,B,C) {
-  lngth <- sqrt(A^2 + B^2 + C^2)
-  unit_normal_x <- A / lngth
-  unit_normal_y <- B / lngth
-  unit_normal_z <- C / lngth
-  return(c(unit_normal_x ,unit_normal_y, unit_normal_z))
-}
-
-
-
-
 
 ####PLOTS---------------------------------
 grid_nb <- 250 #Change
@@ -261,8 +248,8 @@ table_pr_gmax <- data.frame(mu = rep(mu, each = grid_nb),
                             i = res_i
 )
 
-Col_proj = Col[as.numeric(unique(res_i))]
-Col0_proj = Col[as.numeric(unique(res0_i))]
+Col_proj = Col[sort(as.numeric(unique(res_i)))]
+Col0_proj = Col[sort(as.numeric(unique(res0_i)))]
 
 #plot: 2D-projection max gi
 Plot_pr_gmax <- ggplot(table_pr_gmax, aes(x = table_pr_gmax[, 1], 
@@ -278,7 +265,7 @@ Plot_pr_gmax <- ggplot(table_pr_gmax, aes(x = table_pr_gmax[, 1],
         legend.position = "bottom") +
   scale_color_manual(values = Col_proj) + 
   labs(colour = "index i") 
-pdf(file = "Figure_function_proj_gmax.pdf",  width = 3, height = 3)
+pdf(file = "Figure_function_proj_gmax.pdf",  width = 3, height = 2.5)
 print(Plot_pr_gmax)
 dev.off()
 
@@ -295,7 +282,7 @@ Plot_pr0_gmax <- ggplot(table_pr0_gmax, aes(x = table_pr0_gmax[, 1],
         legend.position = "bottom") +
   scale_color_manual(values = Col0_proj) + 
   labs(colour = "index i") 
-pdf(file = "Figure_function_proj_g0max.pdf",  width = 3, height = 3)
+pdf(file = "Figure_function_proj_g0max.pdf",  width = 3, height = 2.5)
 print(Plot_pr0_gmax)
 dev.off()
 
