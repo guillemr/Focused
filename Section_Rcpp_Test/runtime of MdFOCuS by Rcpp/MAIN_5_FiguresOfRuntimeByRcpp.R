@@ -19,29 +19,30 @@ NbSimus <- 100
 Method <-c("FOCuS0")
 Cost <- c("gauss")
 #data frame---------------------------------------------------------------|
-table_alpha <- data.frame(alpha = c(alpha_, alpha_),
-                                 Runtime = rep(NA, 2*length(alpha_)), Dimension = c(rep("p = 2", length(alpha_)), rep("p = 3", length(alpha_))))
-  colnames(table_alpha) <- c('\u03b1', 'Run time, seconds', 'Dimension')
-table_alpha [1:length(alpha_), 2] <- read.table(file = "Alpha_dependence_2_N_1e+05_FOCuS0_gauss_it_100_.txt", row.names = 1)[,2]
-table_alpha [(length(alpha_)+1) : (2*length(alpha_)), 2] <- read.table(file = "Alpha_dependence_3_N_1e+05_FOCuS0_gauss_it_100_.txt", row.names = 1)[,2]
+table_alpha <- data.frame(alpha = c(alpha_, alpha_, alpha_),
+                          Runtime = rep(NA, 3*length(alpha_)), Dimension = c(rep("p = 1", length(alpha_)), rep("p = 2", length(alpha_)), rep("p = 3", length(alpha_))))
+colnames(table_alpha) <- c('\u03b1', 'Run time, seconds', 'Dimension')
+table_alpha [1:length(alpha_), 2] <- read.table(file = "Alpha_dependence_1_N_1e+05_FOCuS0_gauss_it_100_.txt", row.names = 1)[,2]
+table_alpha [(length(alpha_)+1) : (2*length(alpha_)), 2] <- read.table(file = "Alpha_dependence_2_N_1e+05_FOCuS0_gauss_it_100_.txt", row.names = 1)[,2]
+table_alpha [(2*length(alpha_)+1) : (3*length(alpha_)), 2] <- read.table(file = "Alpha_dependence_3_N_1e+05_FOCuS0_gauss_it_100_.txt", row.names = 1)[,2]
 
 #plot---------------------------------------------------------------------|
 Plot <- ggplot(table_alpha, aes(x = table_alpha[, 1], y = table_alpha[, 2], color = Dimension)) +
-    geom_point(shape=1) +
-    geom_line( linetype = "dashed") +
-    ylab("Run time, seconds") +
-   xlab(expression(x= "Parameter "*alpha* "")) +
-    scale_x_continuous(breaks=c(1.0625,1.5,2,3,4,8,16,32,64,128),  trans = "log10",
-                       labels = c("1.0625","1.5","2","3","4","8","16","32","64","128")) +
-    scale_y_continuous(breaks=c(0,1,5,10,20, 30, 60, 120, 180),  trans = "log10",
-                       labels = c('0','1','5','10','20', '30', '60', '120', '180')) +
-    theme_bw() +
-    theme(text = element_text(size = 13),
-          legend.title = element_text(size = 13),
-          legend.text=element_text(size = 13),
-          legend.position = "right") +
-    scale_color_manual(values = c("#1F78B4","#B2DF8A"))
-  
+  geom_point(shape=1) +
+  geom_line( linetype = "dashed") +
+  ylab("Run time, seconds") +
+  xlab(expression(x= "Parameter "*alpha* "")) +
+  scale_x_continuous(breaks=c(1.0625,1.5,2,3,4,8,16,32,64,128),  trans = "log10",
+                     labels = c("1.0625","1.5","2","3","4","8","16","32","64","128")) +
+  scale_y_continuous(breaks=c(0,1,5,10,20, 30, 60, 120, 180),  trans = "log10",
+                     labels = c('0','1','5','10','20', '30', '60', '120', '180')) +
+  theme_bw() +
+  theme(text = element_text(size = 13),
+        legend.title = element_text(size = 13),
+        legend.text=element_text(size = 13),
+        legend.position = "right") +
+  scale_color_brewer(palette = 'Paired')
+
 print(Plot)
 #save---------------------------------------------------------------------|
 pdf(file = "Figure_Gaussian_Model_Run_time_as_the function_of_alpha.pdf",  width = 8, height = 3)
@@ -149,11 +150,11 @@ alpha <- as.vector(alpha,'numeric')
 pdf(file = "Figure_Gaussian_Model_Runtime.pdf",  width = 8, height = 4)
 print(Plot2)
 dev.off()
-  
+
 ################################################################################
 ##   Figure Runtime as the function of p. Poisson Model                      ##                         
 ################################################################################
-  
+
 #parameters---------------------------------------------------------------|
 Dim <- c (1, 2, 3, 4, 5)
 nameDim <- c("MdFOCuS0 (p = 1)",
