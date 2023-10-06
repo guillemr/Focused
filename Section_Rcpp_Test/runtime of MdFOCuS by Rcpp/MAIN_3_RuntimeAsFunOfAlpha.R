@@ -65,7 +65,7 @@ Method = 'FOCuS0'
 Cost = 'gauss'
 #parameters---------------------------------------------------------------|
 N <-10^5
-P <-  c(2, 3)
+P <-  c(1,2, 3)
 Alpha <- c(1+2^(-4:0), 3, 2^(2:7))
 #number of simulations
 nbSimus_ <- 100
