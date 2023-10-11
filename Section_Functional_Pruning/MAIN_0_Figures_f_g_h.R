@@ -23,13 +23,10 @@ a =  indices
 b =  cumsum(x)
 b = b[indices]
 c=rep(0,3)
-#c =  c(0,6,20)
-#time 
 
-#RColorBrewer::brewer.pal(6, "Paired")
 #colors 
 Col = c("#A6CEE3", "#B2DF8A", "#FB9A99" )
-#Col = c("#1F78B4","#33a02c","#6a3d9a")
+
 
 #functions---------------------------------------------------------------
 
@@ -203,11 +200,11 @@ plot_grid(Plot_f0, Plot_pr_f0max, ncol = 1, align = "v")
 plot_grid(Plot_f, Plot_pr_fmax, ncol = 1, align = "v")
 
 #save
-pdf(file = "Figure_functions_f0i_and_f0max.pdf",  width = 3, height = 5)
+pdf(file = "Figure_functions_fi_and_fmax_n3.pdf",  width = 3, height = 5)
 plot_grid(Plot_f0, Plot_pr_f0max, ncol = 1, align = "v")
 dev.off()
 #save
-pdf(file = "Figure_functions_fi_and_fmax.pdf",  width = 3, height = 5)
+pdf(file = "Figure_functions_fi_and_fmax_n4.pdf",  width = 3, height = 5)
 plot_grid(Plot_f, Plot_pr_fmax, ncol = 1, align = "v")
 dev.off()
 #g plots-----------------------------------
@@ -265,7 +262,7 @@ Plot_pr_gmax <- ggplot(table_pr_gmax, aes(x = table_pr_gmax[, 1],
         legend.position = "bottom") +
   scale_color_manual(values = Col_proj) + 
   labs(colour = "index i") 
-pdf(file = "Figure_function_proj_gmax.pdf",  width = 3, height = 2.5)
+pdf(file = "Figure_function_proj_gmax_n4.pdf",  width = 3, height = 2.5)
 print(Plot_pr_gmax)
 dev.off()
 
@@ -282,7 +279,7 @@ Plot_pr0_gmax <- ggplot(table_pr0_gmax, aes(x = table_pr0_gmax[, 1],
         legend.position = "bottom") +
   scale_color_manual(values = Col0_proj) + 
   labs(colour = "index i") 
-pdf(file = "Figure_function_proj_g0max.pdf",  width = 3, height = 2.5)
+pdf(file = "Figure_function_proj_gmax_n3.pdf",  width = 3, height = 2.5)
 print(Plot_pr0_gmax)
 dev.off()
 
@@ -333,7 +330,7 @@ plot_g <- plot_ly() %>%
 
 
 plot_g
-#save in "Figure_functions_g_i.png"
+#save in "Figure_functions_g_i_n4.tiff"
 
 plot_g0 <- plot_ly() %>% 
   add_trace(
@@ -367,7 +364,7 @@ plot_g0 <- plot_ly() %>%
 
 
 plot_g0
-
+#save in "Figure_functions_g_i_n3.tiff"
 #plot h----------------------------------------------------------
 kappa <- seq(min(g1,g2,g3), max(g1,g2,g3), 
              length.out = 10)# grid_nb )
@@ -420,7 +417,7 @@ plot_h <- subplot(plot1, plot2, plot3)  %>%
   ))
 
 plot_h
-#save in "Figure_h_i.png"
+#save in "Figure_functions_h_i_n4.tiff"
 
 
 #plot h0----------------------------------------------------------
@@ -465,5 +462,5 @@ plot_h0 <- subplot(plot01, plot02)  %>%
   ))
 
 plot_h0
-#save in "Figure_h_i.png"
+#save in "Figure_functions_h_i_n3.tiff"
 

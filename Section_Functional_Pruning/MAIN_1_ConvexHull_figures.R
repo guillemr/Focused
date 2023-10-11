@@ -82,9 +82,7 @@ y <- rnorm(n, 0, 1)
 data_2D <-  cbind (x,y)
 plot_3D <- Plot_ConvexHull_3D(data_2D)
 print(plot_3D)
-
-
-#save in "Figure_CHwithRW_2D.png"
+#Attention: save in "Figure_CHwithRW_2D.tiff"
 ################################################################################
 ##                                     end                                    ##
 ################################################################################
