@@ -69,30 +69,6 @@ get_glo_opt <- function(left_cusum, sum_squares, cost=cost_Focus0) {
  out
 }
 
-########################################################################
-
-cost_lr_partial <- function(left_cumsum, sum_squares){
-  
-  cand <- 1:(nrow(left_cumsum)-1)
-  right_cumsum <- scale(left_cumsum, left_cumsum[nrow(left_cumsum), ], scale=F)
-  ncand <- nrow(left_cumsum)-1
-  indep_cusum <- -(right_cumsum[cand, 2:ncol(right_cumsum), drop=FALSE]^2) / abs(right_cumsum[cand, 1]) -
-    (left_cumsum [cand, 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[cand, 1]) +
-    ((left_cumsum [nrow(left_cumsum), 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[nrow(left_cumsum), 1]))[rep(1, ncand), ] # possible bug
-  apply(indep_cusum, 1, sort) |> apply(2, cumsum) |> t()
-}
-
-get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial) {
-  out_costs <- cost(left_cusum, sum_squares)
-  out <- list(
-    opt.change = apply(out_costs, 2, which.min),
-    opt.cost = apply(out_costs, 2, min)
-  )
-  out
-}
-
-#########################################################################
-
 #------------------------------------------------------------------------|
 #' @title lr_Focus
 #'
@@ -109,6 +85,61 @@ lr_Focus <- function(left_cumsum, sum_squares){
   rowSums(left_cumsum [cand, 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[cand, 1]) +
   sum(left_cumsum [nrow(left_cumsum), 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[nrow(left_cumsum), 1])
 }
+
+#------------------------------------------------------------------------|
+#' cost_lr_partial
+#'
+#' @description Function for computing the likelihood ratio test for increasing density regimes, e.g. change in 1-d, 2-d, ...,
+#' 
+#' @param left_cumsum 
+#' @param sum_squares 
+#' @param null_known 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+cost_lr_partial <- function(left_cumsum, sum_squares, null_known = FALSE){
+  
+  cand <- 1:(nrow(left_cumsum)-1)
+  right_cumsum <- scale(left_cumsum, left_cumsum[nrow(left_cumsum), ], scale=F)
+  ncand <- nrow(left_cumsum)-1
+  right_cost <- -(right_cumsum[cand, 2:ncol(right_cumsum), drop=FALSE]^2) / abs(right_cumsum[cand, 1]) 
+  
+  if(null_known) {
+    indep_cusum <-  right_cost
+  } else {
+    left_cost <- - (left_cumsum [cand, 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[cand, 1]) 
+    null_cost <-  ((left_cumsum [nrow(left_cumsum), 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[nrow(left_cumsum), 1]))[rep(1, ncand), ] # possible bug
+    indep_cusum <- right_cost + left_cost + null_cost
+  }
+  
+  apply(indep_cusum, 1, sort) |> apply(2, cumsum) |> t()
+}
+
+#------------------------------------------------------------------------|
+#' get_partial_opt
+#'
+#' @description
+#' Get the optimal values across increasing density regimes
+#' 
+#' @param left_cusum 
+#' @param sum_squares 
+#' @param cost A cost function, like cost_lr_partial, should output a matrix of dimensions #T x p, where T is the set of opt changepoints considered
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial) {
+  out_costs <- cost(left_cusum, sum_squares)
+  out <- list(
+    opt.change = apply(out_costs, 2, which.min),
+    opt.cost = apply(out_costs, 2, min)
+  )
+  out
+}
+
 
 #------------------------------------------------------------------------|
 #' @title FocusCH
@@ -208,19 +239,40 @@ FocusCH <- function(data,
 ########################### END ################################################
 ################################################################################
 
-
-# library(tidyverse)
-# library(future)
-# library(furrr)
-# plan(multisession, workers=18)
-# 
-# source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
-# 
-# get_one_run <- function(seed, n = 100, p = 3, v_density = 1:p) {
-#   y_nc <- generate_sequence(n = n, p = p, cp = n-1, magnitude = 0, dens = 0, seed = seed) |> t()
-#   out <- FocusCH(y_nc, get_opt_cost = get_partial_opt, threshold = rep(Inf, p))
-#   -reduce(out$opt.cost, rbind)[, v_density] |> apply(2, max)
-# }
-# 
-# out1 <- future_map(1:100, get_one_run, p = 6) |> reduce(rbind)
-# apply(out1, 2, quantile, prob=exp(-1)) |> plot()
+# testing stuff
+if (F) {
+  library(tidyverse)
+  library(future)
+  library(furrr)
+  plan(multisession, workers=18)
+  
+  source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
+  
+  y_nc <- generate_sequence(n = 100, p = 3, cp = 99, magnitude = 0, dens = 0, seed = 42) |> t()
+  
+  cost_lr_partial0 <- \(...) cost_lr_partial(..., null_known = T)
+  
+  out <- FocusCH(y_nc, get_opt_cost = \(...) get_partial_opt(..., cost = cost_lr_partial0), threshold = rep(Inf, 3))
+  out$opt.cost
+  
+  # tuning the thresholds
+  get_one_run <- function(seed, n = 100, p = 3, v_density = 1:p) {
+    y_nc <- generate_sequence(n = n, p = p, cp = n-1, magnitude = 0, dens = 0, seed = seed) |> t()
+    out <- FocusCH(y_nc, get_opt_cost = get_partial_opt, threshold = rep(Inf, p))
+    -reduce(out$opt.cost, rbind)[, v_density] |> apply(2, max)
+  }
+  
+  out1 <- future_map(1:100, get_one_run, p = 3) |> reduce(rbind)
+  apply(out1, 2, quantile, prob=exp(-1))
+  
+  
+  ## unknown
+  get_one_run <- function(seed, n = 100, p = 3, v_density = 1:p) {
+    y_nc <- generate_sequence(n = n, p = p, cp = n-1, magnitude = 0, dens = 0, seed = seed) |> t()
+    out <- FocusCH(y_nc, get_opt_cost = \(...) get_partial_opt(..., cost = cost_lr_partial0), threshold = rep(Inf, p))
+    -reduce(out$opt.cost, rbind)[, v_density] |> apply(2, max)
+  }
+  
+  out2 <- future_map(1:100, get_one_run, p = 3) |> reduce(rbind)
+  apply(out2, 2, quantile, prob=exp(-1))
+}
