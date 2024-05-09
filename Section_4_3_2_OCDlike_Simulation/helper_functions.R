@@ -1,6 +1,6 @@
-install.packages("remotes", "ocd")
+##install.packages("remotes", "ocd")
 library(remotes)
-remotes::install_github("gtromano/FOCuS", force = TRUE)
+##remotes::install_github("gtromano/FOCuS", force = TRUE)
 library(ocd)
 library(FOCuS)
 library(parallel)

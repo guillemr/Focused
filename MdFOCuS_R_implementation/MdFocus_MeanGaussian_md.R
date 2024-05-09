@@ -10,7 +10,7 @@
 
 #packages----------------------------------------------------------------|
 library(geometry)
-
+library(tidyverse)
 #functions---------------------------------------------------------------|
 #------------------------------------------------------------------------|
 #' @title cost_Focus0
@@ -57,6 +57,42 @@ cost_Focus <- function(left_cumsum, sum_squares){
   rowSums(left_cumsum [cand, 2:ncol(left_cumsum), drop = FALSE]^2) / abs(left_cumsum[cand, 1]) + sum_squares
 }
 
+# -------------------------------------# 
+# get global optimum
+
+get_glo_opt <- function(left_cusum, sum_squares, cost=cost_Focus0) {
+  out_costs <- cost(left_cusum, sum_squares)
+ out <- list(
+   opt.change = which.min(out_costs),
+   opt.cost = min(out_costs)
+ )
+ out
+}
+
+########################################################################
+
+cost_lr_partial <- function(left_cumsum, sum_squares){
+  
+  cand <- 1:(nrow(left_cumsum)-1)
+  right_cumsum <- scale(left_cumsum, left_cumsum[nrow(left_cumsum), ], scale=F)
+  ncand <- nrow(left_cumsum)-1
+  indep_cusum <- -(right_cumsum[cand, 2:ncol(right_cumsum), drop=FALSE]^2) / abs(right_cumsum[cand, 1]) -
+    (left_cumsum [cand, 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[cand, 1]) +
+    ((left_cumsum [nrow(left_cumsum), 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[nrow(left_cumsum), 1]))[rep(1, ncand), ] # possible bug
+  apply(indep_cusum, 1, sort) |> apply(2, cumsum) |> t()
+}
+
+get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial) {
+  out_costs <- cost(left_cusum, sum_squares)
+  out <- list(
+    opt.change = apply(out_costs, 2, which.min),
+    opt.cost = apply(out_costs, 2, min)
+  )
+  out
+}
+
+#########################################################################
+
 #------------------------------------------------------------------------|
 #' @title lr_Focus
 #'
@@ -97,7 +133,7 @@ lr_Focus <- function(left_cumsum, sum_squares){
 #' }
 
 FocusCH <- function(data,
-                    fun.cost = cost_Focus0,
+                    get_opt_cost = get_glo_opt,
                     common_difference_step = 1,
                     common_ratio_step = 1,
                     first_step_qhull = ncol(data) + 5,
@@ -106,24 +142,24 @@ FocusCH <- function(data,
   ##get data parameters
   n <- nrow(data)
   p <- ncol(data)
-
+  
   ## get cnsts for costs
   data_cumsum_square <- cumsum(rowSums(data^2))
-
+  
   ##get points P(i), i in {1,n}
   data <- cbind (1, data)
   data_left_cumsum  <- apply(data, 2, cumsum)
-
+  
   ##pruning step
   next_step_qhull <- first_step_qhull
-
+  
   ## Output candidate list
   list_cand <- list(index = integer(n), # set of candidates
-                  nb = 0, #number of candidates
-                  nb_at_step = integer(n), #vector of the number of candidates at each iteration
-				          opt.cost = numeric(n),   #vector of the functional cost at each iteration
-				          opt.change = integer(n))  #vector of the optimal changepoint candidate at each iteration
-
+                    nb = 0, #number of candidates
+                    nb_at_step = integer(n), #vector of the number of candidates at each iteration
+                    opt.cost = vector(mode = "list", length = n),   #vector of the functional cost at each iteration
+                    opt.change = vector(mode = "list", length = n))  #vector of the optimal changepoint candidate at each iteration
+  
   ##First iteration
   list_cand$nb                  <- list_cand$nb + 1
   list_cand$index[list_cand$nb] <- 1
@@ -135,14 +171,16 @@ FocusCH <- function(data,
     list_cand$nb                  <- list_cand$nb + 1;
     list_cand$index[list_cand$nb] <- i;
     list_cand$nb_at_step[i]       <- list_cand$nb
-
+    
     ##First step: search of optimal changepoint candidate (index and maximization)
     index_cand <- list_cand$index[1:list_cand$nb]
     left_mean  <- data_left_cumsum[index_cand, ] #get cumsum for cost at time i
-    cost_cand               <- fun.cost(left_mean, data_cumsum_square[i]) #get all costs at time i
-    list_cand$opt.cost[i]   <- min(cost_cand) # get optimal cost
-    list_cand$opt.change[i] <- index_cand[which.min(cost_cand)]  # get optimal changepoint candidate
-
+    
+    out <- get_opt_cost(left_mean, data_cumsum_square[i]) # get optimal cost
+    list_cand$opt.change[[i]] <- out$opt.change
+    list_cand$opt.cost[[i]] <- out$opt.cost
+    
+    
     ## Second step: Pruning by the Quickhull algorithm from the package "geometry"
     if(list_cand$nb >= next_step_qhull | i == n) {
       hull <- convhulln(left_mean) # get convex hull of {P(i)} i in set of candidates
@@ -152,12 +190,16 @@ FocusCH <- function(data,
       ## update next_step_qhull
       next_step_qhull <- common_ratio_step * list_cand$nb + common_difference_step
     }
-
+    
     ## if the (minus) optimal cost is over the threshold end the algorithm
-    if (- list_cand$opt.cost[i] >= threshold) {
+    if(length(list_cand$opt.cost[[i]]) == length(threshold))
+      change_detected <- sum(- list_cand$opt.cost[[i]] >= threshold)
+    else
+      warning("The number of statistics to test does not match the length of the threshold")
+    if (change_detected) {
       break
     }
-
+    
   }
   return(list_cand)
 }
@@ -166,3 +208,19 @@ FocusCH <- function(data,
 ########################### END ################################################
 ################################################################################
 
+
+# library(tidyverse)
+# library(future)
+# library(furrr)
+# plan(multisession, workers=18)
+# 
+# source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
+# 
+# get_one_run <- function(seed, n = 100, p = 3, v_density = 1:p) {
+#   y_nc <- generate_sequence(n = n, p = p, cp = n-1, magnitude = 0, dens = 0, seed = seed) |> t()
+#   out <- FocusCH(y_nc, get_opt_cost = get_partial_opt, threshold = rep(Inf, p))
+#   -reduce(out$opt.cost, rbind)[, v_density] |> apply(2, max)
+# }
+# 
+# out1 <- future_map(1:100, get_one_run, p = 6) |> reduce(rbind)
+# apply(out1, 2, quantile, prob=exp(-1)) |> plot()
