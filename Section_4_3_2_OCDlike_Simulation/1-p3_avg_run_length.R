@@ -1,8 +1,7 @@
 # Script for the average detection delay with 3 dimensions
 
-source("Section_4_3_2_Section_OCDlike_Simulation/helper_functions.R")
+source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
 source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R") ## code to test the main code
-
 ### algos to compare ###
 # FOCuS0-agg - Univariate FOCuS0 aggregated with the sum and the max
 # md-FOCuS0  - Multi dimentional focus0 
@@ -11,14 +10,15 @@ source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R") ## code to test the
 # md-FOCuS   - Multi dimentional focus
 # ocd-est -    ocd with pre-change mean unknown and obtained from an estimate
 
-CORES <- 16
+CORES <- 20
+plan(multisession, workers = CORES)
 
 p <- 3
 N <- 1e4
 REPS <- 300
 target_arl <- 5000
 
-file <- paste0("simulations/thres", "p", p, "N", target_arl, ".RData")
+file <- paste0("Section_4_3_2_OCDlike_Simulation/results/thres", "p", p, "N", target_arl, ".RData")
 if (file.exists(file)) {
   # load the threshold list if the file is already there! 
   load(file)  
@@ -45,10 +45,10 @@ Y_monte_carlo <- lapply(1:300, function(i) generate_sequence(n = target_arl + 10
 ##################################
 
 # tuning the threshold
-focus0_mc <- mclapply(Y_monte_carlo, function(y) {
+focus0_mc <- future_map(Y_monte_carlo, function(y) {
   res <- FOCuS_multi_JMLR(y, c(Inf, Inf), mu0 = rep(0, p))
   data.frame(max = max(res$maxs), sum = max(res$sums))
-}, mc.cores = CORES)
+}, .progress = T)
 
 focus0_mc <- Reduce(rbind, focus0_mc)
 t_hat <- apply(focus0_mc, 2, quantile, probs = .44)
@@ -58,10 +58,10 @@ t_multiplier <- cbind(focus0_mc$max / t_hat["max"], focus0_mc$sum / t_hat["sum"]
 thresholds$focus0 <- t_hat * t_multiplier
 
 # evaluating the empirical run length
-focus0_nc <- mclapply(Y_nc, function(y) {
+focus0_nc <- future_map(Y_nc, function(y) {
   res <- FOCuS_multi_JMLR(y, thresholds$focus0, mu0 = rep(0, p))
   res$t
-}, mc.cores = CORES)
+}, .progress = T)
 focus0_nc <- focus0_nc %>% unlist
 focus0_nc[focus0_nc == -1] <- N
 mean(focus0_nc) # w\ current threshold 5064
@@ -74,8 +74,8 @@ mean(focus0_nc) # w\ current threshold 5064
 # tuning the threshold
 md_focus0_mc <- mclapply(Y_monte_carlo, function(y) {
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
-  res <- FocusCH(data, fun.cost=lr_Focus0, common_difference_step=1, common_ratio_step=2, first_step_qhull=ncol(data)+2)
-  -res$opt.cost
+  res <- FocusCH(data, get_opt_cost = \(...) get_glo_opt(..., cost=lr_Focus0), threshold = Inf)
+  - (res$opt.cost |> unlist())
 }, mc.cores = CORES)
 
 md_focus0_mc <- map_dbl(md_focus0_mc, max)
@@ -84,11 +84,43 @@ thresholds$mdfocus0 <- quantile(md_focus0_mc, probs = .445)
 # evaluating the empirical run length
 md_focus0_nc <- mclapply(Y_nc, function(y) {
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
-  res <- FocusCH(data, fun.cost=lr_Focus0, common_difference_step=1, common_ratio_step=2, first_step_qhull=ncol(data)+2, threshold = thresholds$mdfocus0)
-  which(-res$opt.cost >= thresholds$mdfocus0)
+  res <- FocusCH(data, get_opt_cost = \(...) get_glo_opt(..., cost=lr_Focus0), threshold = thresholds$mdfocus0)
+  which(- (res$opt.cost |> unlist()) >= thresholds$mdfocus0)
 }, mc.cores = CORES)
 md_focus0_nc <- md_focus0_nc %>% map_dbl(~if_else(is_empty(.x), N, .x[1]))
-mean(md_focus0_nc) # w\ current threshold 5063
+mean(md_focus0_nc) # w\ current threshold 5062
+
+################################
+####  md-focus0 part oracle ####
+################################
+
+# tuning the threshold
+md_focus0_part_mc <- mclapply(Y_monte_carlo, function(y) {
+  data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
+  res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = rep(Inf, p))
+  - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
+}, mc.cores = CORES)
+md_focus0_part_mc <- reduce(md_focus0_part_mc, rbind)
+
+# 425
+t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .425)
+t_multiplier <- cbind(md_focus0_part_mc[, 1] / t_hat[1], md_focus0_part_mc[, p] / t_hat[p]) %>%
+  apply(1, max) %>%
+  quantile(probs = .425)
+thresholds$focus0_part <- rep(Inf, p)
+thresholds$focus0_part[c(1, p)] <- t_hat[c(1, p)] * t_multiplier
+
+
+# evaluating the empirical run length
+md_focus0_part_nc <- future_map(Y_nc, function(y) {
+  data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
+  res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$focus0_part)
+  which(res$nb_at_step == 0)[1]
+}, .progress = T)
+md_focus0_part_nc <- md_focus0_part_nc %>% map_dbl(~if_else(is.na(.x), N, .x[1]))
+mean(md_focus0_part_nc) # w\ current threshold 
+
+aaaaa <- FocusCH(Y_nc[[265]] |> t(), get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$focus0_part)
 
 ############################
 #####  ocd oracle ##########

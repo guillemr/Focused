@@ -57,18 +57,6 @@ cost_Focus <- function(left_cumsum, sum_squares){
   rowSums(left_cumsum [cand, 2:ncol(left_cumsum), drop = FALSE]^2) / abs(left_cumsum[cand, 1]) + sum_squares
 }
 
-# -------------------------------------# 
-# get global optimum
-
-get_glo_opt <- function(left_cusum, sum_squares, cost=cost_Focus0) {
-  out_costs <- cost(left_cusum, sum_squares)
- out <- list(
-   opt.change = which.min(out_costs),
-   opt.cost = min(out_costs)
- )
- out
-}
-
 #------------------------------------------------------------------------|
 #' @title lr_Focus
 #'
@@ -79,11 +67,25 @@ get_glo_opt <- function(left_cusum, sum_squares, cost=cost_Focus0) {
 
 lr_Focus <- function(left_cumsum, sum_squares){
   cand <- 1:(nrow(left_cumsum)-1)
+  # this is just a telescopic sum cancellation trick
+  # subtracting from all candidates, the last column, e.g. the total cumulative sum
   right_cumsum <- scale(left_cumsum, left_cumsum[nrow(left_cumsum), ], scale=F)
   ncand <- nrow(left_cumsum)-1
   -rowSums(right_cumsum[cand, 2:ncol(right_cumsum), drop=FALSE]^2) / abs(right_cumsum[cand, 1]) -
   rowSums(left_cumsum [cand, 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[cand, 1]) +
   sum(left_cumsum [nrow(left_cumsum), 2:ncol(left_cumsum) , drop=FALSE]^2) / abs(left_cumsum[nrow(left_cumsum), 1])
+}
+
+# -------------------------------------# 
+# get global optimum
+
+get_glo_opt <- function(left_cusum, sum_squares, cost=cost_Focus0) {
+  out_costs <- cost(left_cusum, sum_squares)
+ out <- list(
+   opt.change = which.min(out_costs),
+   opt.cost = min(out_costs)
+ )
+ out
 }
 
 #------------------------------------------------------------------------|
@@ -114,8 +116,11 @@ cost_lr_partial <- function(left_cumsum, sum_squares, null_known = FALSE){
     indep_cusum <- right_cost + left_cost + null_cost
   }
   
-  apply(indep_cusum, 1, sort) |> apply(2, cumsum) |> t()
+  #apply(indep_cusum, 1, sort) |> apply(2, cumsum) |> t()
+  indep_cusum
 }
+
+cost_lr_partial0 <- \(...) cost_lr_partial(..., null_known = T)
 
 #------------------------------------------------------------------------|
 #' get_partial_opt
@@ -133,10 +138,16 @@ cost_lr_partial <- function(left_cumsum, sum_squares, null_known = FALSE){
 #' @examples
 get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial) {
   out_costs <- cost(left_cusum, sum_squares)
+
   out <- list(
-    opt.change = apply(out_costs, 2, which.min),
-    opt.cost = apply(out_costs, 2, min)
+    opt.change = out_costs |> apply(2, which.min),
+    opt.cost = out_costs |> apply(2, min) |> sort() |> cumsum()
   )
+  
+  # out <- list(
+  #   opt.change = apply(out_costs, 2, which.min),
+  #   opt.cost = apply(out_costs, 2, min)
+  # )
   out
 }
 
@@ -166,7 +177,7 @@ get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial) {
 FocusCH <- function(data,
                     get_opt_cost = get_glo_opt,
                     common_difference_step = 1,
-                    common_ratio_step = 1,
+                    common_ratio_step = 2,
                     first_step_qhull = ncol(data) + 5,
                     threshold = Inf) {
   # Initialization-------------
@@ -322,8 +333,18 @@ FocusCH_HighDim <- function(data,
 ########################### END ################################################
 ################################################################################
 
+if(F) {      
+  source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
+    
+  y_nc <- generate_sequence(n = 1000, p = 3, cp = 999, magnitude = 1, dens = 1, seed = 123) |> t()
+
+  # with the unkown loss 
+  system.time(out <- FocusCH(y_nc, get_opt_cost = \(...) get_glo_opt(..., cost=lr_Focus0), threshold = Inf))
+  - head(out$opt.cost |> unlist())
+}
+
 # testing stuff
-if (F) {
+if (T) {
   library(tidyverse)
   library(future)
   library(furrr)
@@ -331,11 +352,16 @@ if (F) {
   
   source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
   
-  y_nc <- generate_sequence(n = 100, p = 3, cp = 99, magnitude = 0, dens = 0, seed = 42) |> t()
-  
+  y_nc <- generate_sequence(n = 5000, p = 3, cp = 4999, magnitude = 0, dens = 0, seed = 42) |> t()
+
+  # with the known loss  
   cost_lr_partial0 <- \(...) cost_lr_partial(..., null_known = T)
   
   out <- FocusCH(y_nc, get_opt_cost = \(...) get_partial_opt(..., cost = cost_lr_partial0), threshold = rep(Inf, 3))
+  out$opt.cost
+
+  # with the unkown loss 
+  out <- FocusCH(y_nc, get_opt_cost = get_partial_opt, threshold = rep(Inf, 3))
   out$opt.cost
   
   # tuning the thresholds
@@ -363,7 +389,7 @@ if (F) {
 
 # testing high dimentional
 
-if (T) {
+if (F) {
   library(tidyverse)
   library(future)
   library(furrr)
