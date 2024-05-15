@@ -95,7 +95,7 @@ for (s in 1:nrow(sim_grid)) {
   
   res <- future_map(1:REPS, function(i) {
     data <- t(Y[[i]]) # trasposing as the current prototype reads n x p (rather then p x n)
-    res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$focus0_part)
+    res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$md_focus0_part)
     t <- which(res$nb_at_step == 0)[1]
     if_else(is.na(t), simu$N, t - 1)
   }, .progress=T)
@@ -105,30 +105,6 @@ for (s in 1:nrow(sim_grid)) {
 }
 md_focus0_part_res <- md_focus0_part_res %>% reduce(rbind)
 runs_res$md_focus0_part <- md_focus0_part_res
-
-#aaamdfp <- data.frame(sim = 1:REPS, magnitude = simu$delta, density = simu$prop, algo = "MdFOCuS0_part", est = res, real = simu$changepoint, N = simu$N)
-
-
-##### to delete
-
-# i <- 5
-# data <- t(Y[[i]]) 
-# res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$focus0_part)
-# t <- which(res$nb_at_step == 0)[1]
-# if_else(is.na(t), simu$N, t - 1)
-# - (res$opt.cost |> reduce(rbind)) [969:974, ] / 2
-
-# r <- FOCuS_multi_JMLR(Y[[i]], thresholds$focus0, mu0 = rep(0, p))
-# r$t
-
-# r$stats[, 970:975] |> t()
-
-# apply(r$stats[, 970:975] |> t(), 1, cumsum) |> t()
-
-# colSums(r$stats[, 970:975])
-# thresholds$focus0
-
-##############
 
 
 ############################
@@ -164,7 +140,8 @@ focus0est_res <- NULL
 for (s in 1:nrow(sim_grid)) {
   simu <- sim_grid[s, ]
   Y <- map(1:REPS, function(i) generate_sequence(n = simu$N, p = p, cp = simu$changepoint, magnitude = simu$delta, dens = simu$prop, seed = i))
-  
+  Y_train <- lapply(1:300, function(i) generate_sequence(n = 500, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + i))
+
   # FOCuS0 - estimated mean
   res <- future_map(1:REPS, function(i) {
     y <- Y[[i]]
@@ -218,15 +195,41 @@ for (s in 1:nrow(sim_grid)) {
   # focus - oracle mean
   res <- future_map(1:REPS, function(i) {
     data <- t(Y[[i]]) # trasposing as the current prototype reads n x p (rather then p x n)
-    res <- FocusCH(data, fun.cost=lr_Focus, common_difference_step=1, common_ratio_step=2, first_step_qhull=ncol(data)+2, threshold = thresholds$mdfocus)
-    over_the_t <- which(-res$opt.cost >= thresholds$mdfocus)
-    if_else(is_empty(over_the_t), simu$N, over_the_t[1])
+    res <- FocusCH(data, get_opt_cost = \(...) get_glo_opt(..., cost=lr_Focus), threshold = thresholds$mdfocus)
+    t <- which(res$nb_at_step == 0)[1]
+    if_else(is.na(t), simu$N, t - 1)
   }, .progress=T)
   res <- unlist(res)
   md_focus_res[[s]] <- data.frame(sim = 1:REPS, magnitude = simu$delta, density = simu$prop, algo = "md-FOCuS", est = res, real = simu$changepoint, N = simu$N)
 }
 md_focus_res <- md_focus_res %>% reduce(rbind)
 runs_res$md_focus <- md_focus_res
+
+
+##################################
+##### md-focus0 part oracle ######
+##################################
+
+md_focus_part_res <- NULL
+
+for (s in 1:nrow(sim_grid)) {
+  simu <- sim_grid[s, ]
+  #print(simu)
+  Y <- map(1:REPS, function(i) generate_sequence(n = simu$N, p = p, cp = simu$changepoint, magnitude = simu$delta, dens = simu$prop, seed = i))
+  
+  res <- future_map(1:REPS, function(i) {
+    data <- t(Y[[i]]) # trasposing as the current prototype reads n x p (rather then p x n)
+    res <- FocusCH(data, get_opt_cost = get_partial_opt, threshold = thresholds$md_focus_part)
+    t <- which(res$nb_at_step == 0)[1]
+    if_else(is.na(t), simu$N, t - 1)
+  }, .progress=T)
+  res <- unlist(res)
+  md_focus_part_res[[s]] <- data.frame(sim = 1:REPS, magnitude = simu$delta, density = simu$prop, algo = "MdFOCuS_part", est = res, real = simu$changepoint, N = simu$N)
+  cat(paste0(" Total:", s / nrow(sim_grid) * 100, "% "))
+}
+md_focus_part_res <- md_focus_part_res %>% reduce(rbind)
+runs_res$md_focus_part <- md_focus_part_res
+
 
 
 #######################
@@ -268,4 +271,13 @@ tot_summ <- tot_res %>% mutate(dd = est - 500, density = density * p) %>%
   summarise(avg_dd = mean(if_else(dd < 0, NA, dd), na.rm = T), fpr = mean(dd<0))
 tot_summ %>% print(n=Inf)
 
-tot_summ %>% pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -fpr)
+wide_summary <- tot_summ %>% 
+  pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -fpr) 
+
+# unkown change
+wide_summary %>%
+  select(magnitude, density, FOCuS0, "MdFOCuS0_part", "md-FOCuS0", "ocd (ora)")
+
+# known change
+wide_summary %>%
+  select(magnitude, density, FOCuS, "FOCuS0 (est)", "MdFOCuS_part", "md-FOCuS", "ocd (est)")
