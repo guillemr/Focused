@@ -97,7 +97,7 @@ for (s in 1:nrow(sim_grid)) {
     data <- t(Y[[i]]) # trasposing as the current prototype reads n x p (rather then p x n)
     res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$focus0_part)
     t <- which(res$nb_at_step == 0)[1]
-    if_else(is.na(t), simu$N, t) - 1
+    if_else(is.na(t), simu$N, t - 1)
   }, .progress=T)
   res <- unlist(res)
   md_focus0_part_res[[s]] <- data.frame(sim = 1:REPS, magnitude = simu$delta, density = simu$prop, algo = "MdFOCuS0_part", est = res, real = simu$changepoint, N = simu$N)

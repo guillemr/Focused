@@ -95,18 +95,18 @@ mean(md_focus0_nc) # w\ current threshold 5062
 ################################
 
 # tuning the threshold
-md_focus0_part_mc <- mclapply(Y_monte_carlo, function(y) {
+md_focus0_part_mc <- future_map(Y_monte_carlo, function(y) {
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
   res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = rep(Inf, p))
   - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
-}, mc.cores = CORES)
+}, .progress = T)
 md_focus0_part_mc <- reduce(md_focus0_part_mc, rbind)
 
 # 425
-t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .425)
+t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .44)
 t_multiplier <- cbind(md_focus0_part_mc[, 1] / t_hat[1], md_focus0_part_mc[, p] / t_hat[p]) %>%
   apply(1, max) %>%
-  quantile(probs = .425)
+  quantile(probs = .44)
 thresholds$focus0_part <- rep(Inf, p)
 thresholds$focus0_part[c(1, p)] <- t_hat[c(1, p)] * t_multiplier
 

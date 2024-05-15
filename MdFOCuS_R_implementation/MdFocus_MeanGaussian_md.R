@@ -139,11 +139,16 @@ cost_lr_partial0 <- \(...) cost_lr_partial(..., null_known = T)
 get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial) {
   out_costs <- cost(left_cusum, sum_squares)
 
+  partial_sums <- out_costs |> apply(2, min) |> sort() |> cumsum()
+  exact <- rowSums(out_costs)
+
   out <- list(
-    opt.change = out_costs |> apply(2, which.min),
-    opt.cost = out_costs |> apply(2, min) |> sort() |> cumsum()
+    opt.change = exact |> which.min(),
+    opt.cost = c(m = partial_sums[1],
+                 sm = partial_sums[length(partial_sums)],
+                 ex = exact |> min())
   )
-  
+
   # out <- list(
   #   opt.change = apply(out_costs, 2, which.min),
   #   opt.cost = apply(out_costs, 2, min)
