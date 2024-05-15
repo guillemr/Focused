@@ -102,25 +102,26 @@ md_focus0_part_mc <- future_map(Y_monte_carlo, function(y) {
 }, .progress = T)
 md_focus0_part_mc <- reduce(md_focus0_part_mc, rbind)
 
+
+
+
 # 425
-t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .44)
-t_multiplier <- cbind(md_focus0_part_mc[, 1] / t_hat[1], md_focus0_part_mc[, p] / t_hat[p]) %>%
+t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .43)
+t_multiplier <- as.data.frame(md_focus0_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
   apply(1, max) %>%
-  quantile(probs = .44)
-thresholds$focus0_part <- rep(Inf, p)
-thresholds$focus0_part[c(1, p)] <- t_hat[c(1, p)] * t_multiplier
+  quantile(probs = .43)
+thresholds$focus0_part <- t_hat * t_multiplier
 
 
 # evaluating the empirical run length
 md_focus0_part_nc <- future_map(Y_nc, function(y) {
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
   res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$focus0_part)
-  which(res$nb_at_step == 0)[1]
+  which(res$nb_at_step == 0)[1] - 1
 }, .progress = T)
 md_focus0_part_nc <- md_focus0_part_nc %>% map_dbl(~if_else(is.na(.x), N, .x[1]))
 mean(md_focus0_part_nc) # w\ current threshold 
 
-aaaaa <- FocusCH(Y_nc[[265]] |> t(), get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$focus0_part)
 
 ############################
 #####  ocd oracle ##########

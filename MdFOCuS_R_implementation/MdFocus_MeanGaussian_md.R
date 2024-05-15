@@ -349,7 +349,7 @@ if(F) {
 }
 
 # testing stuff
-if (T) {
+if (F) {
   library(tidyverse)
   library(future)
   library(furrr)
@@ -406,8 +406,8 @@ if (F) {
   y_nc <- generate_sequence(n = 1000, p = p, cp = 99, magnitude = 0, dens = 0, seed = 42) |> t()
   
 
-  system.time(out <- FocusCH_HighDim(y_nc, get_opt_cost = get_partial_opt, threshold = rep(Inf, p)))
-  plot(-reduce(out$opt.cost, rbind) |> apply(2, max))
+  system.time(out <- FocusCH_HighDim(y_nc, get_opt_cost = get_partial_opt, threshold = rep(Inf, 3)))
+  #plot(-reduce(out$opt.cost, rbind) |> apply(2, max))
   
   ocd_det <- ocd_known(c(Inf, Inf, Inf), rep(0, p), rep(1, p))
   system.time(r <- ocd_detecting(t(y_nc), ocd_det))
