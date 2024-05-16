@@ -10,7 +10,7 @@ source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R") ## code to test the
 # md-FOCuS   - Multi dimentional focus
 # ocd-est -    ocd with pre-change mean unknown and obtained from an estimate
 
-CORES <- 20
+CORES <- 10
 plan(multisession, workers = CORES)
 
 p <- 5
@@ -64,7 +64,7 @@ focus0_nc <- future_map(Y_nc, function(y) {
 }, .progress = T)
 focus0_nc <- focus0_nc %>% unlist
 focus0_nc[focus0_nc == -1] <- N
-mean(focus0_nc) # w\ current threshold 5064
+mean(focus0_nc) # w\ current threshold 5007
 
 
 ################################
@@ -87,7 +87,7 @@ md_focus0_nc <- future_map(Y_nc, function(y) {
   which(- (res$opt.cost |> unlist()) >= thresholds$mdfocus0)
 }, .progress = T)
 md_focus0_nc <- md_focus0_nc %>% map_dbl(~if_else(is_empty(.x), N, .x[1]))
-mean(md_focus0_nc) # w\ current threshold 5062
+mean(md_focus0_nc) # w\ current threshold 5048
 
 ################################
 ####  md-focus0 part oracle ####
@@ -106,7 +106,7 @@ t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .43)
 t_multiplier <- as.data.frame(md_focus0_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
   apply(1, max) %>%
   quantile(probs = .43)
-thresholds$focus0_part <- t_hat * t_multiplier
+thresholds$md_focus0_part <- t_hat * t_multiplier
 
 
 # evaluating the empirical run length
@@ -251,7 +251,7 @@ md_focus_nc <- future_map(Y_nc, function(y) {
   which(- (res$opt.cost |> unlist()) >= thresholds$mdfocus)
 }, .progress = T)
 md_focus_nc <- md_focus_nc %>% map_dbl(~if_else(is_empty(.x), N, .x[1]))
-mean(md_focus_nc) # w\ current threshold 5037
+mean(md_focus_nc) # w\ current threshold 5122.837
 
 
 ###############################

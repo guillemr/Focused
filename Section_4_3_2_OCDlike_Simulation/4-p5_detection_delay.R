@@ -4,7 +4,7 @@ source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R") ## code to test the
 #source("md_focus0_draft/simpleCH.R") ## code with the main function
 #source("md_focus0_draft/simpleCH_utils.R") ## code to test the main code
 
-CORES <- 20
+CORES <- 10
 plan(multicore, workers = CORES)
 
 REPS <- 300
