@@ -107,7 +107,7 @@ t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .43)
 t_multiplier <- as.data.frame(md_focus0_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
   apply(1, max) %>%
   quantile(probs = .43)
-thresholds$focus0_part <- t_hat * t_multiplier
+thresholds$md_focus0_part <- t_hat * t_multiplier
 
 
 # evaluating the empirical run length
