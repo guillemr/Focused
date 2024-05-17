@@ -1,3 +1,10 @@
+library(future)
+
+CORES <- 10
+plan(multicore, workers = CORES)
+# Set up the cluster plan with the SSH session
+# plan(cluster, workers = rep("SERVER ADDRESS", CORES))
+
 # Script for the average detection delay with 3 dimensions
 
 source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
@@ -10,8 +17,6 @@ source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R") ## code to test the
 # md-FOCuS   - Multi dimentional focus
 # ocd-est -    ocd with pre-change mean unknown and obtained from an estimate
 
-CORES <- 20
-plan(multisession, workers = CORES)
 
 p <- 3
 N <- 1e4
