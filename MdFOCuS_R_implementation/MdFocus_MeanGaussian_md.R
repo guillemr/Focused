@@ -402,14 +402,19 @@ FocusCH_HighDim_OPT <- function(data,
     })
     
     ##First step: search of optimal changepoint candidate (index and maximization)
-    # index_cand <- list_cand$index[1:list_cand$nb]
-    # left_mean  <- data_left_cumsum[index_cand, ] #get cumsum for cost at time i
-    # out <- get_opt_cost(left_mean, data_cumsum_square[i]) # get optimal cost
-    # opt_list$opt.change[[i]] <- out$opt.change
-    # opt_list$opt.cost[[i]] <- out$opt.cost
 
-    opt_list$opt.change[[i]] <- rep(0, length(threshold))
-    opt_list$opt.cost[[i]] <- rep(0, length(threshold))
+    glo_index_cand <- map(list_cand, \(l_c) l_c$index[1:l_c$nb]) |> 
+                        unlist() |>
+                        unique()
+ 
+    glo_left_mean  <- data_left_cumsum[glo_index_cand, ] #get cumsum for cost at time i
+    out <- get_opt_cost(glo_left_mean, data_cumsum_square[i]) # get optimal cost
+    opt_list$opt.change[[i]] <- out$opt.change
+    opt_list$opt.cost[[i]] <- out$opt.cost
+
+    # for debug reasons only
+    # opt_list$opt.change[[i]] <- rep(0, length(threshold))
+    # opt_list$opt.cost[[i]] <- rep(0, length(threshold))
 
     ## Second step: Pruning by the Quickhull algorithm from the package "geometry"
     list_cand <- map(list_cand, update_hull)
@@ -516,7 +521,7 @@ if (F) {
 
 # testing fast high dimentional
 
-if (T) {
+if (F) {
   library(tidyverse)
   library(future)
   library(furrr)
@@ -525,13 +530,14 @@ if (T) {
   source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
   
   p <- 100
-  N <- 1000
-  y = generate_sequence(n = N, p = p, cp = N-1, magnitude = 0, dens = 0, seed = 42)  
+  N <- 5000
+  y = generate_sequence(n = N, p = p, cp = N-1, magnitude = 0, dens = 0, seed = 123)  
 
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
-  res <- FocusCH_HighDim_OPT(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 2, threshold = rep(Inf, 5))
-  system.time(res <- FocusCH_HighDim_OPT(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 2, threshold = rep(Inf, 5)))
-  #system.time(res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 2, threshold = rep(Inf, 5)))
+  #res <- FocusCH_HighDim_OPT(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 2, threshold = rep(Inf, 5))
+  system.time(res1 <- FocusCH_HighDim_OPT(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 1.2, threshold = rep(Inf, 5)))
+  - (res1$opt.cost |> reduce(rbind)) |> apply(2, max)
+  system.time(res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 1.2, threshold = rep(Inf, 5)))
   - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
 
 }
