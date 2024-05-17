@@ -139,15 +139,14 @@ cost_lr_partial0 <- \(...) cost_lr_partial(..., null_known = T)
 get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial, which_par = ncol(left_cusum) - 1) {
   out_costs <- cost(left_cusum, sum_squares)
 
-  partial_sums <- out_costs |> apply(2, min) |> sort() |> cumsum()
-  #exact <- rowSums(out_costs)
+  sum_of_the_max <- out_costs |> apply(2, min) |> sum()
 
   exact_partials <- apply(out_costs, 1, sort) |> apply(2, cumsum) |> t()
 
   out <- list(
     opt.change = exact_partials[, which_par, drop=F] %>% apply(2, which.min),
-    opt.cost = c(m = partial_sums[1],
-                 sm = partial_sums[length(partial_sums)],
+    opt.cost = c(m = min(exact_partials[ , 1]),
+                 sm = sum_of_the_max,
                  ex = exact_partials[, which_par, drop=F] %>% apply(2, min))
   )
 
@@ -257,7 +256,7 @@ FocusCH <- function(data,
 FocusCH_HighDim <- function(data,
                     get_opt_cost = get_glo_opt,
                     common_difference_step = 1,
-                    common_ratio_step = 1,
+                    common_ratio_step = 2,
                     first_step_qhull = ncol(data) + 5,
                     threshold = Inf,
                     dim_indexes = map2(seq(0, ncol(data)-1, by=2), seq(1, ncol(data), by=2), \(f, s) c(f, s %% ncol(data)) + 1)) {
@@ -305,7 +304,6 @@ FocusCH_HighDim <- function(data,
     
     ## Second step: Pruning by the Quickhull algorithm from the package "geometry"
     if(list_cand$nb >= next_step_qhull | i == n) {
-      
       on_the_hull <-
         map(dim_indexes, \(i) convhulln(left_mean[, c(1, i + 1)]) |>
                   as.vector() |>
@@ -405,13 +403,17 @@ if (F) {
   source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
   
   p <- 100
-  y_nc <- generate_sequence(n = 1000, p = p, cp = 99, magnitude = 0, dens = 0, seed = 42) |> t()
-  
+  N <- 2000
+  y = generate_sequence(n = N, p = p, cp = 500, magnitude = 0, dens = 0, seed = 42)  
 
-  system.time(out <- FocusCH_HighDim(y_nc, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), threshold = rep(Inf, 5)))
-  aaaa <- -reduce(out$opt.cost, rbind) |> apply(2, max)
-  plot(c(1, 5, 25, 100),  aaaa[-2])
-  
+  # focus
+  res <- FOCuS_multi_JMLR(y, c(Inf, Inf), mu0 = rep(0, p))
+  data.frame(max = max(res$maxs), sum = max(res$sums))
+
+  data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
+  system.time(res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 2, threshold = rep(Inf, 5)))
+  - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
+
   ocd_det <- ocd_known(c(Inf, Inf, Inf), rep(0, p), rep(1, p))
-  system.time(r <- ocd_detecting(t(y_nc), ocd_det))
+  system.time(r <- ocd_detecting(y, ocd_det))
 }

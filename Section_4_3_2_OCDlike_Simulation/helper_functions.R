@@ -1,12 +1,11 @@
 ##install.packages("remotes", "ocd")
-library(remotes)
+# library(remotes)
 ##remotes::install_github("gtromano/FOCuS", force = TRUE)
 library(ocd)
 library(FOCuS)
 #library(parallel)
 library(tidyverse)
 library(furrr)
-library(future)
 
 generate_sequence <- function(n = 1000, p = 100, cp = 200, sd = 1, magnitude = 1, dens = .1, seed = 42){
   
