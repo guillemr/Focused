@@ -157,6 +157,21 @@ get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial, which
   out
 }
 
+get_3_opts_reg <- function(left_cusum, sum_squares, cost=cost_lr_partial) {
+  out_costs <- cost(left_cusum, sum_squares)
+
+  partial_sums <- out_costs |> apply(2, min) |> sort() |> cumsum()
+  exact <- rowSums(out_costs)
+
+  out <- list(
+    opt.change = exact |> which.min(),
+    opt.cost = c(m = partial_sums[1],
+                 sm = partial_sums[length(partial_sums)],
+                 ex = exact |> min())
+  )
+  out
+}
+
 
 #------------------------------------------------------------------------|
 #' @title FocusCH

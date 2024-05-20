@@ -57,7 +57,7 @@ ocd_detecting <- function (Y, detector) {
 }
 
 
-MC_ocd_v6 <- function (Y, beta, sparsity, training_data = NA, CORES = 16) {
+MC_ocd_v6 <- function (Y, beta, sparsity, training_data = NA) {
   
   peak_stat <- future_map(1:length(Y), function(rep) {
     cat(rep, " ")
