@@ -4,8 +4,9 @@
 library(ocd)
 library(FOCuS)
 #library(parallel)
-library(tidyverse)
+#library(tidyverse)
 library(furrr)
+library(dplyr)
 
 generate_sequence <- function(n = 1000, p = 100, cp = 200, sd = 1, magnitude = 1, dens = .1, seed = 42){
   
