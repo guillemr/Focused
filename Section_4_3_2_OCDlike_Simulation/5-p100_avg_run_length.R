@@ -227,7 +227,7 @@ if (F) {
   }, .progress = T)
   focus_nc <- focus_nc %>% unlist
   focus_nc[focus_nc == -1] <- N
-  mean(focus_nc) # w\ current 5086
+  mean(focus_nc) # w\ current 5041
   
 }
 

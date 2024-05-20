@@ -1,6 +1,7 @@
 library(future)
+library(tidyr)
 
-CORES <- 5
+CORES <- 30
 plan(multicore, workers = CORES)
 # Set up the cluster plan with the SSH session
 # plan(cluster, workers = rep("SERVER ADDRESS", CORES))
@@ -15,7 +16,7 @@ source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R") ## code to test the
 REPS <- 300
 
 # setting parameters
-p <- 3
+p <- 100
 N <- 5000
 # loading thresholds from past simulations
 load(paste0("Section_4_3_2_OCDlike_Simulation/results/thres", "p", p, "N", N, ".RData"))
@@ -24,7 +25,7 @@ load(paste0("Section_4_3_2_OCDlike_Simulation/results/thres", "p", p, "N", N, ".
 sim_grid <- expand_grid(
   sim = 1:REPS,
   delta = c(2, 1, .5, 0.25),  # magnitude of a change
-  prop = 1:p/p,  # proportion of sequences with a change
+  prop = c(0.01, 0.05, 0.1, .5, 1),  # proportion of sequences with a change
   changepoint = 500,
   N = N
   )
@@ -55,23 +56,6 @@ focus0_res <- focus0_res %>% reduce(rbind)
 runs_res$focus0 <- focus0_res
 
 
-
-#############################
-##### md-focus0 oracle ######
-#############################
-
-# md-focus0 oracle
-md_focus0_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
-  data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH(data, get_opt_cost = \(...) get_glo_opt(..., cost=lr_Focus0), threshold = thresholds$mdfocus0)
-  t <- which(res$nb_at_step == 0)[1]
-  est <- if_else(is.na(t), N, t - 1)
-  data.frame(sim = sim, magnitude = delta, density = prop, algo = "md-FOCuS0", est = est, real = changepoint, N = N)
-}, .progress = T)
-md_focus0_res <- md_focus0_res %>% reduce(rbind)
-runs_res$md_focus0 <- md_focus0_res
-
-
 ##################################
 ##### md-focus0 part oracle ######
 ##################################
@@ -79,14 +63,31 @@ runs_res$md_focus0 <- md_focus0_res
 # md-focus0 part oracle
 md_focus0_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
   data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0), threshold = thresholds$md_focus0_part)
+  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), threshold = thresholds$md_focus0_part)
   t <- which(res$nb_at_step == 0)[1]
   est <- if_else(is.na(t), N, t - 1)
-  data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS0_part", est = est, real = changepoint, N = N)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS0_2d_part", est = est, real = changepoint, N = N)
 }, .progress = T)
 md_focus0_part_res <- md_focus0_part_res %>% reduce(rbind)
 runs_res$md_focus0_part <- md_focus0_part_res
 
+
+######################################
+##### md-focus0 1-d part oracle ######
+######################################
+
+# md-focus0 part oracle
+md_focus0_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+  data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
+  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = thresholds$md_focus0_1d_part)
+  t <- which(res$nb_at_step == 0)[1]
+  est <- if_else(is.na(t), N, t - 1)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS0_1d_part", est = est, real = changepoint, N = N)
+}, .progress = T)
+md_focus0_1d_part_res <- md_focus0_1d_part_res %>% reduce(rbind)
+runs_res$md_focus0_1d_part <- md_focus0_1d_part_res
+
+save(runs_res, file = file)
 
 ############################
 #####  ocd oracle ##########
@@ -136,36 +137,34 @@ focus_res <- focus_res %>% reduce(rbind)
 runs_res$focus <- focus_res
 
 
-####################
-##### md-focus######
-####################
-
-# md-focus
-md_focus_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
-  data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH(data, get_opt_cost = \(...) get_glo_opt(..., cost=lr_Focus), threshold = thresholds$mdfocus)
-  t <- which(res$nb_at_step == 0)[1]
-  est <- if_else(is.na(t), N, t - 1)
-  data.frame(sim = sim, magnitude = delta, density = prop, algo = "md-FOCuS", est = est, real = changepoint, N = N)
-}, .progress = T)
-md_focus_res <- md_focus_res %>% reduce(rbind)
-runs_res$md_focus <- md_focus_res
-
-
-
-##################################
-##### md-focus0 part oracle ######
-##################################
+#################################
+##### md-focus part oracle ######
+#################################
 
 md_focus_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
   data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH(data, get_opt_cost = get_partial_opt, threshold = thresholds$md_focus_part)
+  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), threshold = thresholds$md_focus_part)
   t <- which(res$nb_at_step == 0)[1]
   est <- if_else(is.na(t), N, t - 1)
   data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS_part", est = est, real = changepoint, N = N)
 }, .progress = T)
 md_focus_part_res <- md_focus_part_res %>% reduce(rbind)
 runs_res$md_focus_part <- md_focus_part_res
+
+
+####################################
+##### md-focus 1d part oracle ######
+####################################
+
+md_focus_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+  data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
+  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = thresholds$md_focus0_1d_part)
+  t <- which(res$nb_at_step == 0)[1]
+  est <- if_else(is.na(t), N, t - 1)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS_1d_part", est = est, real = changepoint, N = N)
+}, .progress = T)
+md_focus_1d_part_res <- md_focus_1d_part_res %>% reduce(rbind)
+runs_res$md_focus_1d_part <- md_focus_1d_part_res
 
 
 
