@@ -3,7 +3,7 @@ library(future)
 # Set up the cluster plan
 # plan(sequential)
 plan(multicore, workers = 30)
-# plan(cluster, workers = rep("romano@ma-res-romano.lancaster.ac.uk", 20))
+# plan(cluster, workers = rep("romano@ma-res-romano.lancaster.ac.uk", 30))
 
 # Script for the average detection delay with 3 dimensions
 
@@ -85,22 +85,60 @@ if (F) {
   load("md_focus0_part1.RData")
 }
 
-t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .44)
-t_multiplier <- as.data.frame(md_focus0_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
+if (F) {
+  t_hat <- apply(md_focus0_part_mc, 2, quantile, probs = .44)
+  t_multiplier <- as.data.frame(md_focus0_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
+    apply(1, max) %>%
+    quantile(probs = .44)
+  thresholds$md_focus0_part <- t_hat * t_multiplier
+
+  # evaluating the empirical run length
+  md_focus0_part_nc <- future_map(Y_nc, function(y) {
+    data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
+    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), threshold = thresholds$md_focus0_part)
+    which(res$nb_at_step == 0)[1] - 1
+  }, .progress = T)
+  md_focus0_part_nc <- md_focus0_part_nc %>% map_dbl(~if_else(is.na(.x), N, .x[1]))
+  mean(md_focus0_part_nc) # w\ current threshold 
+}
+
+
+###################################
+####  md-focus0 1d part oracle ####
+###################################
+
+if (T) {
+  # tuning the threshold
+  md_focus0_1d_part_mc <- future_map(Y_monte_carlo, function(y) {
+    data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
+    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = rep(Inf, 5))
+    - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
+  }, .progress = T)
+  md_focus0_1d_part_mc <- reduce(md_focus0_1d_part_mc, rbind)
+  
+  save(md_focus0_1d_part_mc, file="md_focus0_1d_part1.RData")
+  
+} else {
+  load("md_focus0_1d_part1.RData")
+}
+
+t_hat <- apply(md_focus0_1d_part_mc, 2, quantile, probs = .44)
+t_multiplier <- as.data.frame(md_focus0_1d_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
   apply(1, max) %>%
   quantile(probs = .44)
-thresholds$md_focus0_part <- t_hat * t_multiplier
+thresholds$md_focus0_1d_part <- t_hat * t_multiplier
 
+if (F) {
 
-# evaluating the empirical run length
-md_focus0_part_nc <- future_map(Y_nc, function(y) {
-  data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
-  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), threshold = thresholds$md_focus0_part)
-  which(res$nb_at_step == 0)[1] - 1
-}, .progress = T)
-md_focus0_part_nc <- md_focus0_part_nc %>% map_dbl(~if_else(is.na(.x), N, .x[1]))
-mean(md_focus0_part_nc) # w\ current threshold 
-
+  # evaluating the empirical run length
+  md_focus0_part_nc <- future_map(Y_nc, function(y) {
+    data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
+    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = thresholds$md_focus0_1d_part)
+    which(res$nb_at_step == 0)[1] - 1
+  }, .progress = T)
+  md_focus0_part_nc <- md_focus0_part_nc %>% map_dbl(~if_else(is.na(.x), N, .x[1]))
+  mean(md_focus0_part_nc) # w\ current threshold 
+}
 
 ############################
 #####  ocd oracle ##########
@@ -212,26 +250,66 @@ save(md_focus_part_mc, file="md_focus_part1.RData")
 } else {
   load("md_focus_part1.RData")
 }
-t_hat <- apply(md_focus_part_mc, 2, quantile, probs = .45)
-t_multiplier <- as.data.frame(md_focus_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
+
+if(F){
+  t_hat <- apply(md_focus_part_mc, 2, quantile, probs = .45)
+  t_multiplier <- as.data.frame(md_focus_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
   apply(1, max) %>%
   quantile(probs = .45)
-thresholds$md_focus_part <- t_hat * t_multiplier
+  thresholds$md_focus_part <- t_hat * t_multiplier
 
-# evaluating the empirical run length
-md_focus_part_nc <- future_map(Y_nc, function(y) {
+  # evaluating the empirical run length
+  md_focus_part_nc <- future_map(Y_nc, function(y) {
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
   res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), threshold = thresholds$md_focus_part)
   which(res$nb_at_step == 0)[1] - 1
-}, .progress = T)
-md_focus_part_nc <- md_focus_part_nc %>% map_dbl(~if_else(is.na(.x), N, .x[1]))
-mean(md_focus_part_nc) # w\ current threshold 5024
+  }, .progress = T)
+  md_focus_part_nc <- md_focus_part_nc %>% map_dbl(~if_else(is.na(.x), N, .x[1]))
+  mean(md_focus_part_nc) # w\ current threshold 5024
+}
+
+
+###################################
+####  md-focus 1d part oracle ####
+###################################
+
+if (T) {
+  # tuning the threshold
+  md_focus_1d_part_mc <- future_map(Y_monte_carlo, function(y) {
+    data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
+    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = rep(Inf, 5))
+    - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
+  }, .progress = T)
+  md_focus_1d_part_mc <- reduce(md_focus_1d_part_mc, rbind)
+  
+  save(md_focus_1d_part_mc, file="md_focus_1d_part1.RData")
+  
+} else {
+  load("md_focus_1d_part1.RData")
+}
+
+t_hat <- apply(md_focus_1d_part_mc, 2, quantile, probs = .45)
+t_multiplier <- as.data.frame(md_focus_1d_part_mc) |> map2_df(t_hat, ~ .x / .y) %>%
+  apply(1, max) %>%
+  quantile(probs = .45)
+thresholds$md_focus_1d_part <- t_hat * t_multiplier
+
+if (F) {
+  # evaluating the empirical run length
+  md_focus0_part_nc <- future_map(Y_nc, function(y) {
+    data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
+    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = thresholds$md_focus0_1d_part)
+    which(res$nb_at_step == 0)[1] - 1
+  }, .progress = T)
+  md_focus0_part_nc <- md_focus0_part_nc %>% map_dbl(~if_else(is.na(.x), N, .x[1]))
+  mean(md_focus0_part_nc) # w\ current threshold 
+}
 
 
 ###############################
 #####  ocd estimated ##########
 ###############################
-
+if(F) {
 ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = Y_train)
 
 avg_run_len <- 0
@@ -254,7 +332,7 @@ while (avg_run_len < target_arl) {
 }
 
 thresholds$ocd_est <- ocd_est_thres # 6048.23
-
+}
 
 
 ################################
