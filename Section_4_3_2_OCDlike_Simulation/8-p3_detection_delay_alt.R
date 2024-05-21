@@ -159,7 +159,7 @@ runs_res$md_focus <- md_focus_res
 
 md_focus_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
   data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH(data, get_opt_cost = get_partial_opt, threshold = thresholds$md_focus_part)
+  res <- FocusCH(data, get_opt_cost = get_3_opts_reg, threshold = thresholds$md_focus_part)
   t <- which(res$nb_at_step == 0)[1]
   est <- if_else(is.na(t), N, t - 1)
   data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS_part", est = est, real = changepoint, N = N)

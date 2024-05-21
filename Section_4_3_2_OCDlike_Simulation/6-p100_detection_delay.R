@@ -184,6 +184,7 @@ md_focus_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changep
 md_focus_1d_part_res <- md_focus_1d_part_res %>% reduce(rbind)
 runs_res$md_focus_1d_part <- md_focus_1d_part_res
 
+save(runs_res, file = file)
 
 
 #######################
