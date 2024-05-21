@@ -79,7 +79,14 @@ runs_res$md_focus0_part <- md_focus0_part_res
 # md-focus0 part oracle
 md_focus0_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
   data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = thresholds$md_focus0_1d_part)
+  res <-
+    FocusCH_HighDim(
+      data,
+      get_opt_cost = \(...) get_partial_opt(..., cost = cost_lr_partial0, which_par = c(5, 25, 100)),
+      dim_indexes = as.list(1:ncol(data)),
+      common_ratio_step = 1.3,
+      threshold = thresholds$md_focus0_1d_part
+    )
   t <- which(res$nb_at_step == 0)[1]
   est <- if_else(is.na(t), N, t - 1)
   data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS0_1d_part", est = est, real = changepoint, N = N)
@@ -143,7 +150,12 @@ runs_res$focus <- focus_res
 
 md_focus_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
   data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), threshold = thresholds$md_focus_part)
+  res <-
+    FocusCH_HighDim(
+      data,
+      get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)),
+      threshold = thresholds$md_focus_part
+    )
   t <- which(res$nb_at_step == 0)[1]
   est <- if_else(is.na(t), N, t - 1)
   data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS_part", est = est, real = changepoint, N = N)
@@ -158,7 +170,13 @@ runs_res$md_focus_part <- md_focus_part_res
 
 md_focus_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
   data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = thresholds$md_focus0_1d_part)
+  res <- FocusCH_HighDim(
+    data,
+    get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)),
+    dim_indexes = as.list(1:ncol(data)),
+    common_ratio_step = 1.3,
+    threshold = thresholds$md_focus_1d_part
+  )
   t <- which(res$nb_at_step == 0)[1]
   est <- if_else(is.na(t), N, t - 1)
   data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS_1d_part", est = est, real = changepoint, N = N)
