@@ -11,6 +11,7 @@
 #packages----------------------------------------------------------------|
 library(geometry)
 library(purrr)
+library(Rcpp)
 #functions---------------------------------------------------------------|
 #------------------------------------------------------------------------|
 #' @title cost_Focus0
@@ -122,6 +123,50 @@ cost_lr_partial <- function(left_cumsum, sum_squares, null_known = FALSE){
 
 cost_lr_partial0 <- \(...) cost_lr_partial(..., null_known = T)
 
+
+## the min and argminum
+cppFunction('
+List sortCumsumSelectedMinArgmin_(NumericMatrix mat, IntegerVector columns) {
+    int nrow = mat.nrow();
+    int ncol = mat.ncol();
+    int ncol_output = columns.size();
+    NumericVector min_vals(ncol_output);
+    IntegerVector argmin_vals(ncol_output);
+    
+    for (int i = 0; i < nrow; i++) {
+        std::vector<double> row(ncol);
+        
+        // Copy the row to a std::vector
+        for (int j = 0; j < ncol; j++) {
+            row[j] = mat(i, j);
+        }
+        
+        // Sort the std::vector
+        std::sort(row.begin(), row.end());
+        
+        // Calculate cumulative sum
+        for (int j = 1; j < ncol; j++) {
+            row[j] += row[j - 1];
+        }
+        
+        // Copy the specified columns of the cumulative sum back to the result matrix
+        for (int k = 0; k < ncol_output; k++) {
+            if(row[columns[k] - 1] < min_vals[k]){
+            min_vals[k] = row[columns[k] - 1];
+            argmin_vals[k] = i;
+            }
+        }
+    }
+    
+    
+    
+    return List::create(
+        Named("min_vals") = min_vals,
+        Named("argmin_vals") = argmin_vals
+    );
+}
+')
+
 #------------------------------------------------------------------------|
 #' get_partial_opt
 #'
@@ -141,14 +186,23 @@ get_partial_opt <- function(left_cusum, sum_squares, cost=cost_lr_partial, which
 
   sum_of_the_max <- out_costs |> apply(2, min) |> sum()
 
-  exact_partials <- apply(out_costs, 1, sort) |> apply(2, cumsum) |> t()
+  #exact_partials <- apply(out_costs, 1, sort) |> apply(2, cumsum) |> t()
+
+  out_cpp <- sortCumsumSelectedMinArgmin_(out_costs, c(1, which_par))
 
   out <- list(
-    opt.change = exact_partials[, which_par, drop=F] %>% apply(2, which.min),
-    opt.cost = c(m = min(exact_partials[ , 1]),
+    opt.change = out_cpp$argmin_vals,
+    opt.cost = c(m = out_cpp$min_vals[1],
                  sm = sum_of_the_max,
-                 ex = exact_partials[, which_par, drop=F] %>% apply(2, min))
+                 ex = out_cpp$min_vals[2:length(out_cpp$min_vals)])
   )
+
+  # out <- list(
+  #   opt.change = exact_partials[, which_par, drop=F] %>% apply(2, which.min),
+  #   opt.cost = c(m = min(exact_partials[ , 1]),
+  #                sm = sum_of_the_max,
+  #                ex = exact_partials[, which_par, drop=F] %>% apply(2, min))
+  # )
 
   # out <- list(
   #   opt.change = apply(out_costs, 2, which.min),
@@ -540,27 +594,35 @@ if (F) {
   library(tidyverse)
   library(future)
   library(furrr)
+  library(Rcpp)
   plan(multisession, workers=18)
   
+  source("exemple_Rcpp.R")
+
   source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
   
-  p <- 100
-  N <- 3000
-  y = generate_sequence(n = N, p = p, cp = N-1, magnitude = 0, dens = 0, seed = 123)  
+  p <- 50
+  N <- 5000
+  y = generate_sequence(n = N, p = p, cp = N-1, magnitude = 0, dens = 0, seed = 123)
+
+
 
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
   #res <- FocusCH_HighDim_OPT(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 2, threshold = rep(Inf, 5))
-  # system.time(res1 <- FocusCH_HighDim_OPT(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 1.2, threshold = rep(Inf, 5)))
-  # - (res1$opt.cost |> reduce(rbind)) |> apply(2, max)
-  # system.time(res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 1.2, threshold = rep(Inf, 5)))
-  # - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
+  system.time(res1 <- FocusCH_HighDim_OPT(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 2, threshold = rep(Inf, 5)))
+  - (res1$opt.cost |> reduce(rbind)) |> apply(2, max)
+  system.time(res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), common_ratio_step = 1.5, threshold = rep(Inf, 5)))
+  - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
 
-  res3 <- FocusCH_HighDim(data,
-                                          get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)),
-                                          common_ratio_step = 1.2,
-                                          dim_indexes = as.list(1:ncol(data)),
-                                          threshold = rep(Inf, 5))
-  - (res3$opt.cost |> reduce(rbind)) |> apply(2, max)
+  ocd_det <- ocd_known(c(Inf, Inf, Inf), rep(0, p), rep(1, p))
+  system.time(r <- ocd_detecting(y, ocd_det))
+
+
+  # res3 <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)),
+  #                                         common_ratio_step = 1.2,
+  #                                         dim_indexes = as.list(1:ncol(data)),
+  #                                         threshold = rep(Inf, 5))
+  # - (res3$opt.cost |> reduce(rbind)) |> apply(2, max)
 
 
 }

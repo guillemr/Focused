@@ -1,9 +1,10 @@
 library(future)
-
-CORES <- 20
-plan(multicore, workers = CORES)
+library(tidyr)
+CORES <- 32
+SERVER_ADDRESS <- "romano@ma-res-romano.lancaster.ac.uk"
+# plan(multicore, workers = CORES)
 # Set up the cluster plan with the SSH session
-# plan(cluster, workers = rep("SERVER ADDRESS", CORES))
+plan(cluster, workers = rep(SERVER_ADDRESS, CORES))
 
 source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
 source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R") ## code to test the main code
