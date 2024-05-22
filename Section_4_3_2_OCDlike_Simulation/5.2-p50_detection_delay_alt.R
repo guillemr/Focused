@@ -1,8 +1,6 @@
 library(future)
 library(tidyr)
 
-options(future.globals.maxSize = 8000 * 1024^2)
-
 CORES <- 30
 plan(multicore, workers = CORES)
 # Set up the cluster plan with the SSH session
@@ -11,26 +9,29 @@ plan(multicore, workers = CORES)
 source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
 source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R") ## code to test the main code
 
+#source("md_focus0_draft/simpleCH.R") ## code with the main function
+#source("md_focus0_draft/simpleCH_utils.R") ## code to test the main code
+
 
 REPS <- 300
 
 # setting parameters
-p <- 100
-N <- 5000
-cp <- 500
+p <- 50
+N <- 10000
+cp <- 5000
 # loading thresholds from past simulations
-load(paste0("Section_4_3_2_OCDlike_Simulation/results/thres", "p", p, "N", N, ".RData"))
+load(paste0("Section_4_3_2_OCDlike_Simulation/results/thres", "p", p, "N", "fp_1", ".RData"))
 
 # number of simulations with a change
 sim_grid <- expand_grid(
   sim = 1:REPS,
   delta = c(2, 1, .75, .625, .5, 0.25, 0.125),  # magnitude of a change
-  prop = c(0.01, 0.05, 0.1, .5, 1),  # proportion of sequences with a change
+  prop = c(1, 5, 10, 25, 50)/p,  # proportion of sequences with a change
   changepoint = cp,
   N = N
   )
 
-file <- paste0("Section_4_3_2_OCDlike_Simulation/results/det_del_", "p", p, "N", N, "cp", cp, ".RData")
+file <- paste0("Section_4_3_2_OCDlike_Simulation/results/det_del_", "p", p, "N", N, "cp", cp, "_alt.RData")
 if (file.exists(file)) {
   # load the existing simulation
   load(file)  
@@ -71,6 +72,30 @@ md_focus0_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoi
 md_focus0_part_res <- md_focus0_part_res %>% reduce(rbind)
 runs_res$md_focus0_part <- md_focus0_part_res
 
+
+######################################
+##### md-focus0 1-d part oracle ######
+######################################
+
+# md-focus0 part oracle
+md_focus0_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+  data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
+  res <-
+    FocusCH_HighDim(
+      data,
+      get_opt_cost = \(...) get_partial_opt(..., cost = cost_lr_partial0, which_par = c(5, 25, 100)),
+      dim_indexes = as.list(1:ncol(data)),
+      common_ratio_step = 1.3,
+      threshold = thresholds$md_focus0_1d_part
+    )
+  t <- which(res$nb_at_step == 0)[1]
+  est <- if_else(is.na(t), N, t - 1)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS0_1d_part", est = est, real = changepoint, N = N)
+}, .progress = T)
+md_focus0_1d_part_res <- md_focus0_1d_part_res %>% reduce(rbind)
+runs_res$md_focus0_1d_part <- md_focus0_1d_part_res
+
+save(runs_res, file = file)
 
 ############################
 #####  ocd oracle ##########
@@ -140,6 +165,29 @@ md_focus_part_res <- md_focus_part_res %>% reduce(rbind)
 runs_res$md_focus_part <- md_focus_part_res
 
 
+####################################
+##### md-focus 1d part oracle ######
+####################################
+
+md_focus_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+  data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
+  res <- FocusCH_HighDim(
+    data,
+    get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)),
+    dim_indexes = as.list(1:ncol(data)),
+    common_ratio_step = 1.3,
+    threshold = thresholds$md_focus_1d_part
+  )
+  t <- which(res$nb_at_step == 0)[1]
+  est <- if_else(is.na(t), N, t - 1)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS_1d_part", est = est, real = changepoint, N = N)
+}, .progress = T)
+md_focus_1d_part_res <- md_focus_1d_part_res %>% reduce(rbind)
+runs_res$md_focus_1d_part <- md_focus_1d_part_res
+
+save(runs_res, file = file)
+
+
 #######################
 #####  ocd est ########
 #######################
@@ -172,10 +220,3 @@ tot_summ %>% print(n=Inf)
 
 wide_summary <- tot_summ %>% 
   pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -fpr) 
-
-# unkown change
-(wide_summary %>%
-  select(magnitude, density, FOCuS0, "MdFOCuS0_part", "md-FOCuS0", "ocd (ora)")) 
-# known change
-wide_summary %>%
-  select(magnitude, density, FOCuS, "FOCuS0 (est)", "MdFOCuS_part", "md-FOCuS", "ocd (est)")

@@ -159,7 +159,7 @@ md_focus_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoin
     )
   t <- which(res$nb_at_step == 0)[1]
   est <- if_else(is.na(t), N, t - 1)
-  data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS_part", est = est, real = changepoint, N = N)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS_2d_part", est = est, real = changepoint, N = N)
 }, .progress = T)
 md_focus_part_res <- md_focus_part_res %>% reduce(rbind)
 runs_res$md_focus_part <- md_focus_part_res
@@ -220,10 +220,3 @@ tot_summ %>% print(n=Inf)
 
 wide_summary <- tot_summ %>% 
   pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -fpr) 
-
-# unkown change
-(wide_summary %>%
-  select(magnitude, density, FOCuS0, "MdFOCuS0_part", "md-FOCuS0", "ocd (ora)")) 
-# known change
-wide_summary %>%
-  select(magnitude, density, FOCuS, "FOCuS0 (est)", "MdFOCuS_part", "md-FOCuS", "ocd (est)")
