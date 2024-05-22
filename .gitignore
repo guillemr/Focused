@@ -1,0 +1,15 @@
+.Rproj
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.pdf
+exemple_Rcpp.R
+Focused.Rproj
+*.RData
+test.R
+univm
+univm.pub
+.vscode/launch.json
+high_dim_development/comparison.R
+high_dim_development/offline_focus.py

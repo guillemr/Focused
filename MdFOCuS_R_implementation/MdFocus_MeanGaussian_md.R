@@ -325,7 +325,7 @@ FocusCH <- function(data,
 FocusCH_HighDim <- function(data,
                     get_opt_cost = get_glo_opt,
                     common_difference_step = 1,
-                    common_ratio_step = 2,
+                    common_ratio_step = 1.5,
                     first_step_qhull = ncol(data) + 5,
                     threshold = Inf,
                     dim_indexes = map2(seq(0, ncol(data)-1, by=2), seq(1, ncol(data), by=2), \(f, s) c(f, s %% ncol(data)) + 1)) {
