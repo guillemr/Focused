@@ -1,6 +1,6 @@
 library(future)
 
-CORES <- 10
+CORES <- 20
 plan(multicore, workers = CORES)
 # Set up the cluster plan with the SSH session
 # plan(cluster, workers = rep("romano@ma-res-romano.lancaster.ac.uk", 30))
@@ -28,14 +28,14 @@ if (file.exists(file)) {
 Y_train <- future_map(1:300, function(i) generate_sequence(n = 500, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + i))
 
 # data to train the monte-carlo treshold
-Y_monte_carlo <- future_map(1:300, function(i) generate_sequence(n = target_arl + 100, p = p, cp = 500, magnitude = 0, dens = 0, seed = i))
+Y_monte_carlo <- future_map(1:300, function(i) generate_sequence(n = N, p = p, cp = 500, magnitude = 0, dens = 0, seed = 123456 + i))
 
 ### pre-change mean known ###
 
 ##################################
 ###### FOCUS0 oracle #############
 ##################################
-if (F) {
+if (T) {
   # tuning the threshold
   focus0_mc <- future_map(Y_monte_carlo, function(y) {
     res <- FOCuS_multi_JMLR(y, c(Inf, Inf), mu0 = rep(0, p))
@@ -52,7 +52,7 @@ if (F) {
 ####  md-focus0 part oracle ####
 ################################
 
-if (F) {
+if (T) {
   # tuning the threshold
   md_focus0_part_mc <- future_map(Y_monte_carlo, function(y) {
     data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
@@ -67,7 +67,7 @@ if (F) {
   load("md_focus0_part1.RData")
 }
 
-if (F) {
+if (T) {
   alpha <- 0.01/5
   thresholds$md_focus0_part <- apply(md_focus0_part_mc, 2, quantile, probs = 1-alpha)
 }
@@ -92,7 +92,7 @@ if (T) {
   load("md_focus0_1d_part1.RData")
 }
 
-if (F) {
+if (T) {
   alpha <- 0.01/5
   thresholds$md_focus0_1d_part <- apply(md_focus0_1d_part_mc, 2, quantile, probs = 1-alpha)
 }
@@ -102,7 +102,7 @@ if (F) {
 # #####  ocd oracle ##########
 # ############################
 
-# if (F) {
+# if (T) {
 #   ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto")
   
 #   alpha <- 0.01/3
@@ -118,7 +118,7 @@ if (F) {
 ##################################
 ###### FOCUS0 estimated ##########
 ##################################
-if (F) {
+if (T) {
   # tuning the threshold
   focus0est_mc <- future_map(1:REPS, function(i) {
     y <- Y_monte_carlo[[i]]
@@ -137,7 +137,7 @@ if (F) {
 ####################
 ###### FOCUS  ######
 ####################
-if (F) {
+if (T) {
   # tuning the threshold
   focus_mc <- future_map(Y_monte_carlo, function(y) {
     res <- FOCuS_multi_JMLR(y, c(Inf, Inf))
@@ -157,7 +157,7 @@ if (F) {
 # this simulation will just run the multiple one, and then 
 # the result can be selected and tuned accordingly 
 
-if(F) {# tuning the threshold
+if(T) {# tuning the threshold
 md_focus_part_mc <- future_map(Y_monte_carlo, function(y) {
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
   res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), threshold = rep(Inf, 5))
@@ -170,7 +170,7 @@ save(md_focus_part_mc, file="md_focus_part1.RData")
   load("md_focus_part1.RData")
 }
 
-if(F){
+if(T){
 
   alpha <- 0.01/5
   thresholds$md_focus_part <- apply(md_focus_part_mc, 2, quantile, probs = 1-alpha)
@@ -182,7 +182,7 @@ if(F){
 ####  md-focus 1d part oracle ####
 ###################################
 
-if (F) {
+if (T) {
   # tuning the threshold
   md_focus_1d_part_mc <- future_map(Y_monte_carlo, function(y) {
     data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
@@ -198,7 +198,7 @@ if (F) {
 }
 
 
-if (F) {
+if (T) {
   alpha <- 0.01/5
   thresholds$md_focus_1d_part <- apply(md_focus_1d_part_mc, 2, quantile, probs = 1-alpha)
 }
@@ -207,7 +207,7 @@ if (F) {
 # ###############################
 # #####  ocd estimated ##########
 # ###############################
-# if(F) {
+# if(T) {
 # ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = Y_train)
 
 
