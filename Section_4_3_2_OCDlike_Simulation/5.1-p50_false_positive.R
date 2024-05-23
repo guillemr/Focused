@@ -1,6 +1,6 @@
 library(future)
 
-CORES <- 20
+CORES <- 30
 plan(multicore, workers = CORES)
 # Set up the cluster plan with the SSH session
 # plan(cluster, workers = rep("romano@ma-res-romano.lancaster.ac.uk", 30))
@@ -56,7 +56,7 @@ if (T) {
   # tuning the threshold
   md_focus0_part_mc <- future_map(Y_monte_carlo, function(y) {
     data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
-    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), threshold = rep(Inf, 5))
+    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 50)), threshold = rep(Inf, 5))
     - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
   }, .progress = T)
   md_focus0_part_mc <- reduce(md_focus0_part_mc, rbind)
@@ -81,7 +81,7 @@ if (T) {
   # tuning the threshold
   md_focus0_1d_part_mc <- future_map(Y_monte_carlo, function(y) {
     data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
-    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = rep(Inf, 5))
+    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 50)), dim_indexes = as.list(1:ncol(data)), threshold = rep(Inf, 5))
     - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
   }, .progress = T)
   md_focus0_1d_part_mc <- reduce(md_focus0_1d_part_mc, rbind)
@@ -160,7 +160,7 @@ if (T) {
 if(T) {# tuning the threshold
 md_focus_part_mc <- future_map(Y_monte_carlo, function(y) {
   data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
-  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), threshold = rep(Inf, 5))
+  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 50)), threshold = rep(Inf, 5))
   - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
 }, .progress = T)
 md_focus_part_mc <- reduce(md_focus_part_mc, rbind)
@@ -186,7 +186,7 @@ if (T) {
   # tuning the threshold
   md_focus_1d_part_mc <- future_map(Y_monte_carlo, function(y) {
     data <- t(y) # trasposing as the current prototype reads nxp (rather then pxn)
-    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)), dim_indexes = as.list(1:ncol(data)), threshold = rep(Inf, 5))
+    res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 50)), dim_indexes = as.list(1:ncol(data)), threshold = rep(Inf, 5))
     - (res$opt.cost |> reduce(rbind)) |> apply(2, max)
   }, .progress = T)
   md_focus_1d_part_mc <- reduce(md_focus_1d_part_mc, rbind)

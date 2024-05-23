@@ -64,7 +64,7 @@ runs_res$focus0 <- focus0_res
 # md-focus0 part oracle
 md_focus0_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
   data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
-  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 100)), threshold = thresholds$md_focus0_part)
+  res <- FocusCH_HighDim(data, get_opt_cost = \(...) get_partial_opt(..., cost=cost_lr_partial0, which_par = c(5, 25, 50)), threshold = thresholds$md_focus0_part)
   t <- which(res$nb_at_step == 0)[1]
   est <- if_else(is.na(t), N, t - 1)
   data.frame(sim = sim, magnitude = delta, density = prop, algo = "MdFOCuS0_2d_part", est = est, real = changepoint, N = N)
@@ -83,7 +83,7 @@ md_focus0_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, change
   res <-
     FocusCH_HighDim(
       data,
-      get_opt_cost = \(...) get_partial_opt(..., cost = cost_lr_partial0, which_par = c(5, 25, 100)),
+      get_opt_cost = \(...) get_partial_opt(..., cost = cost_lr_partial0, which_par = c(5, 25, 50)),
       dim_indexes = as.list(1:ncol(data)),
       common_ratio_step = 1.3,
       threshold = thresholds$md_focus0_1d_part
@@ -154,7 +154,7 @@ md_focus_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoin
   res <-
     FocusCH_HighDim(
       data,
-      get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)),
+      get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 50)),
       threshold = thresholds$md_focus_part
     )
   t <- which(res$nb_at_step == 0)[1]
@@ -173,7 +173,7 @@ md_focus_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changep
   data <- t(generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)) # trasposing as the current prototype reads n x p (rather then p x n)
   res <- FocusCH_HighDim(
     data,
-    get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 100)),
+    get_opt_cost = \(...) get_partial_opt(..., which_par = c(5, 25, 50)),
     dim_indexes = as.list(1:ncol(data)),
     common_ratio_step = 1.3,
     threshold = thresholds$md_focus_1d_part
