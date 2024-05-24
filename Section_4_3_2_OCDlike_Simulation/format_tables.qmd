@@ -12,6 +12,7 @@ library(knitr)
 library(kableExtra)
 library(tidyverse)
 ```
+
 # Average run length Tuning
 
 ## 3-dimentional sequences
@@ -24,7 +25,6 @@ cp <- 500
 file <- paste0("results/det_del_", "p", p, "N", N, "cp", cp, ".RData")
 load(file)
 ```
-
 
 ```{r}
 tot_res <- Reduce(rbind, runs_res) %>%
@@ -109,7 +109,6 @@ combined_sd %>%
 
 ## 100-dimentional sequences
 
-
 ```{r}
 p <- 100
 N <- 5000
@@ -118,7 +117,6 @@ cp <- 500
 file <- paste0("results/det_del_", "p", p, "N", N, "cp", cp, ".RData")
 load(file)
 ```
-
 
 ```{r}
 tot_res <- Reduce(rbind, runs_res) %>%
@@ -201,6 +199,113 @@ combined_sd <- wide_sd %>%
 combined_sd %>%
   kable(
     caption = paste0("Standard deviation of the detection delay with ", p, "-dimensional time series for a change at time $t = ", cp, "$. Pre-change parameter known on the left, unknown on the right. Best results per row are highlighted in bold."),
+    label = "tab:variance-known",
+    format = "latex",
+    linesep = c(''),
+    booktabs = TRUE
+  ) %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"), 
+    font_size = 12  # Adjust font size as needed
+  ) %>%
+  add_header_above(c(" " = 1, "Pre-change Known" = 3, "Pre-change Unknown" = 4))
+```
+
+# False positive rate
+
+## 100 dimentional sequences
+
+```{r}
+p <- 50
+N <- 10000
+cp <- 5000
+# loading thresholds from past simulations
+file <- paste0("results/det_del_", "p", p, "N", N, "cp", cp, "_alt.RData")
+load(file)
+```
+
+
+```{r}
+tot_res <- Reduce(rbind, runs_res) %>%
+  mutate(algo = recode(algo,
+  "FOCuS0_alt" = "FOCuS0",
+  "MdFOCuS0_2d_part" = "MdFOCuS0 2d MR",
+  "MdFOCuS0_1d_part" = "MdFOCuS0 1d MR",
+  "MdFOCuS_2d_part" = "MdFOCuS 2d MR",
+  "MdFOCuS_1d_part" = "MdFOCuS 1d MR")
+   )
+
+tot_summ <- tot_res %>% mutate(dd = est - cp, density = density * p) %>% 
+  group_by(magnitude, density, algo) %>%
+  summarise(
+    avg_dd = round(mean(if_else(dd < 0, NA, dd), na.rm = T), 2),
+    sd_dd = round(sd(if_else(dd < 0, NA, dd), na.rm = T), 2),
+    fpr = mean(dd<0)
+    )
+
+```
+
+```{r}
+wide_summary <- tot_summ %>% 
+  pivot_wider(names_from = algo, values_from = avg_dd, id_cols = -c(fpr, sd_dd))
+
+wide_sd <- tot_summ %>%
+  group_by(magnitude, algo) %>%
+  summarise(
+    sd_dd = round(sd(avg_dd), 2),
+    ) %>%
+    pivot_wider(names_from=algo, values_from = sd_dd)
+
+```
+
+```{r}
+# Assuming wide_summary is your tibble
+reordered_summary <- wide_summary %>%
+  select(
+    magnitude, 
+    density, 
+    FOCuS0, 
+    `MdFOCuS0 1d MR`,
+    `MdFOCuS0 2d MR`,
+    `FOCuS0 (est)`, 
+    FOCuS, 
+    `MdFOCuS 1d MR`,
+    `MdFOCuS 2d MR`
+  )
+
+# Add the header row to visually separate the columns
+reordered_summary %>%
+  kable(
+    caption = paste0("Average detection delay with ", p, "-dimensional time series for a change at time $t = ", cp, "$. Pre-change parameter known on the left, unknown on the right. Best results per row are highlighted in bold. Results are by controlling the false positive rate."),
+    label = "tab:dd",
+    format = "latex", 
+    booktabs = TRUE, 
+    linesep = c(rep('', n_distinct(reordered_summary$density)-1),  '\\addlinespace')
+  ) %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"), 
+    font_size = 12  # Adjust font size as needed
+  ) %>%
+  add_header_above(c(" " = 2, "Pre-change Known" = 3, "Pre-change Unknown" = 4))
+```
+
+```{r}
+combined_sd <- wide_sd %>%
+  select(
+    magnitude,
+    FOCuS0, 
+    `MdFOCuS0 1d MR`,
+    `MdFOCuS0 2d MR`,
+    `FOCuS0 (est)`, 
+    FOCuS, 
+    `MdFOCuS 1d MR`,
+    `MdFOCuS 2d MR`
+  )
+
+# Create the table with headers
+combined_sd %>%
+  kable(
+    caption = paste0("Standard deviation of the detection delay with ", p, "-dimensional time series for a change at time $t = ", cp, "$. Pre-change parameter known on the left, unknown on the right. Best results per row are highlighted in bold. Results are by controlling the false positive rate."),
     label = "tab:variance-known",
     format = "latex",
     linesep = c(''),
