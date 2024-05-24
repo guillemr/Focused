@@ -1,5 +1,6 @@
 library(future)
 library(tidyr)
+options(future.globals.maxSize = 8000 * 1024^2)
 
 CORES <- 30
 plan(multicore, workers = CORES)
@@ -101,16 +102,16 @@ save(runs_res, file = file)
 #####  ocd oracle ##########
 ############################
 
-# ocd oracle
-ocd_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
-  y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
-  ocd_det <- ocd_known(thresholds$ocd, rep(0, p), rep(1, p))
-  r <- ocd_detecting(y, ocd_det)
-  est <- r$t
-  data.frame(sim = sim, magnitude = delta, density = prop, algo = "ocd (ora)", est = est, real = changepoint, N = N)
-}, .progress = T)
-ocd_res <- ocd_res %>% reduce(rbind)
-runs_res$ocd <- ocd_res
+# # ocd oracle
+# ocd_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+#   y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
+#   ocd_det <- ocd_known(thresholds$ocd, rep(0, p), rep(1, p))
+#   r <- ocd_detecting(y, ocd_det)
+#   est <- r$t
+#   data.frame(sim = sim, magnitude = delta, density = prop, algo = "ocd (ora)", est = est, real = changepoint, N = N)
+# }, .progress = T)
+# ocd_res <- ocd_res %>% reduce(rbind)
+# runs_res$ocd <- ocd_res
 
 ###################### pre-change unkown ######################################
 
@@ -185,25 +186,23 @@ md_focus_1d_part_res <- future_pmap(sim_grid, .f = function(delta, prop, changep
 md_focus_1d_part_res <- md_focus_1d_part_res %>% reduce(rbind)
 runs_res$md_focus_1d_part <- md_focus_1d_part_res
 
-save(runs_res, file = file)
-
 
 #######################
 #####  ocd est ########
 #######################
 
 
-# ocd est
-ocd_est_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
-  y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
-  y_tr <- generate_sequence(n = 500, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + sim)
-  ocd_det <- ocd_training(y_tr, thresholds$ocd_est)
-  r <- ocd_detecting(y, ocd_det)
-  est <- r$t
-  data.frame(sim = sim, magnitude = delta, density = prop, algo = "ocd (est)", est = est, real = changepoint, N = N)
-}, .progress = T)
-ocd_est_res <- ocd_est_res %>% reduce(rbind)
-runs_res$ocd_est <- ocd_est_res
+# # ocd est
+# ocd_est_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+#   y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
+#   y_tr <- generate_sequence(n = 500, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + sim)
+#   ocd_det <- ocd_training(y_tr, thresholds$ocd_est)
+#   r <- ocd_detecting(y, ocd_det)
+#   est <- r$t
+#   data.frame(sim = sim, magnitude = delta, density = prop, algo = "ocd (est)", est = est, real = changepoint, N = N)
+# }, .progress = T)
+# ocd_est_res <- ocd_est_res %>% reduce(rbind)
+# runs_res$ocd_est <- ocd_est_res
 
 
 ### save past runs ###

@@ -1,4 +1,5 @@
 library(future)
+options(future.globals.maxSize = 8000 * 1024^2)
 
 CORES <- 30
 plan(multicore, workers = CORES)
