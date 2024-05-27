@@ -13,3 +13,7 @@ univm.pub
 .vscode/launch.json
 high_dim_development/comparison.R
 high_dim_development/offline_focus.py
+Section_4_3_2_OCDlike_Simulation_OLD/additional_sims.tex
+Section_4_3_2_OCDlike_Simulation_OLD/format_tables.tex
+Section_4_3_2_OCDlike_Simulation/format_tables.tex
+.gitignore
