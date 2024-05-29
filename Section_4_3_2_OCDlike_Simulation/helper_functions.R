@@ -1,11 +1,12 @@
-install.packages("remotes", "ocd")
-library(remotes)
-remotes::install_github("gtromano/FOCuS", force = TRUE)
+##install.packages("remotes", "ocd")
+# library(remotes)
+##remotes::install_github("gtromano/FOCuS", force = TRUE)
 library(ocd)
 library(FOCuS)
-library(parallel)
-library(tidyverse)
-
+#library(parallel)
+#library(tidyverse)
+library(furrr)
+library(dplyr)
 
 generate_sequence <- function(n = 1000, p = 100, cp = 200, sd = 1, magnitude = 1, dens = .1, seed = 42){
   
@@ -56,9 +57,9 @@ ocd_detecting <- function (Y, detector) {
 }
 
 
-MC_ocd_v6 <- function (Y, beta, sparsity, training_data = NA, CORES = 16) {
+MC_ocd_v6 <- function (Y, beta, sparsity, training_data = NA) {
   
-  peak_stat <- mclapply(1:length(Y), function(rep) {
+  peak_stat <- future_map(1:length(Y), function(rep) {
     cat(rep, " ")
     ps <- c(0, 0, 0)
     y <- Y[[rep]]
@@ -80,7 +81,7 @@ MC_ocd_v6 <- function (Y, beta, sparsity, training_data = NA, CORES = 16) {
       ps <- pmax(ps, ret$stat)
     }
     return(ps)
-  }, mc.cores = CORES)
+  })
   
   peak_stat <- Reduce(rbind, peak_stat)
   colnames(peak_stat) <- c("diag", "off_d", "off_s")
