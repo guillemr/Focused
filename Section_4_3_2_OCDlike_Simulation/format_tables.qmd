@@ -33,7 +33,7 @@ tot_res <- Reduce(rbind, runs_res) %>%
    "MdFOCuS0_part" = "MdFOCuS0 MR")
    )
 
-tot_summ <- tot_res %>% mutate(dd = est - cp, density = density * p) %>% 
+tot_summ <- tot_res %>% filter(magnitude !=  0.625) %>% mutate(dd = est - cp, density = density * p) %>% 
   group_by(magnitude, density, algo) %>%
   summarise(
     avg_dd = round(mean(if_else(dd < 0, NA, dd), na.rm = T), 2),
@@ -128,7 +128,7 @@ tot_res <- Reduce(rbind, runs_res) %>%
   "MdFOCuS_1d_part" = "MdFOCuS 1d MR")
    )
 
-tot_summ <- tot_res %>% mutate(dd = est - cp, density = density * p) %>% 
+tot_summ <- tot_res %>% filter(magnitude !=  0.625) %>% mutate(dd = est - cp, density = density * p) %>% 
   group_by(magnitude, density, algo) %>%
   summarise(
     avg_dd = round(mean(if_else(dd < 0, NA, dd), na.rm = T), 2),
@@ -213,12 +213,12 @@ combined_sd %>%
 
 # False positive rate
 
-## 100 dimentional sequences
+## 50 dimentional sequences
 
 ```{r}
 p <- 50
-N <- 10000
-cp <- 5000
+N <- 20000
+cp <- 10000
 # loading thresholds from past simulations
 file <- paste0("results/det_del_", "p", p, "N", N, "cp", cp, "_alt.RData")
 load(file)
@@ -235,7 +235,7 @@ tot_res <- Reduce(rbind, runs_res) %>%
   "MdFOCuS_1d_part" = "MdFOCuS 1d MR")
    )
 
-tot_summ <- tot_res %>% mutate(dd = est - cp, density = density * p) %>% 
+tot_summ <- tot_res %>% filter(magnitude !=  0.625) %>% mutate(dd = est - cp, density = density * p) %>% 
   group_by(magnitude, density, algo) %>%
   summarise(
     avg_dd = round(mean(if_else(dd < 0, NA, dd), na.rm = T), 2),
