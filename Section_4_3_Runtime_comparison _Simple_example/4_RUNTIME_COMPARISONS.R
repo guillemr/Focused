@@ -1,4 +1,10 @@
 library(microbenchmark)
+library(furrr)
+
+options(future.globals.maxSize = 8000 * 1024^2)
+
+CORES <- 30
+plan(multicore, workers = CORES)
 
 source("Section_4_3_2_OCDlike_Simulation/helper_functions.R")
 source("MdFOCuS_R_implementation/MdFocus_MeanGaussian_md.R")
@@ -43,5 +49,12 @@ tot_sims <- expand_grid(
     seq = 1:5
 )
 
-tot_res <- pmap(tot_sims, run_one_sim, .progress = T)
+tot_res <- future_pmap(tot_sims, run_one_sim, .progress = T)
 save(tot_res, file = "runtime_sim.RData")
+
+
+tot_res <- tot_res |> reduce(rbind)
+
+summary <- tot_res |> 
+    group_by(algorithm, p, n) |>
+    summarise("runtime (nanoseconds)" = mean(time))
