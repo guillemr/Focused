@@ -59,11 +59,13 @@ tot_res <- tot_res |> reduce(rbind)
 save(tot_res, file = "runtime_sim.RData")
 
 library(ggplot2)
-ggplot(data = tot_res, aes(x = n, y = time, group = algorithm, color = algorithm)) +
+library(scales)
+out <- ggplot(data = tot_res, aes(x = n, y = time, group = algorithm, color = algorithm)) +
   geom_line(stat = "summary", fun.data = "mean_se") +
   geom_errorbar(stat = "summary", fun.data = "mean_sdl", width = 0.1) +
   facet_wrap(~p) +
-  scale_x_log10(breaks = c(500, 1e3, 5e3, 1e4, 5e4)) +
+  scale_x_log10(breaks = run_lengths) +
   scale_y_log10(name = "Time (nanoseconds)") +
   theme_minimal()
 
+ggsave(out, file="runtimes.pdf", width = 10, height = 4)
