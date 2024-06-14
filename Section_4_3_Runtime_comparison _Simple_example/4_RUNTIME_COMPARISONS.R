@@ -44,7 +44,7 @@ run_one_sim <- function(n, p, seq) {
 ### running a whole bunch of sims ###
 library(tidyr)
 
-run_lengths <- c(10^c(2:5), 10^c(3:5) / 2)
+run_lengths <- c(500, 1000, 5000, 1e4, 2e4)
 
 tot_sims <- expand_grid(
     p = c(3, 50, 100),
