@@ -1,6 +1,6 @@
 library(future)
-
-CORES <- 20
+library(tidyr)
+CORES <- 30
 plan(multicore, workers = CORES)
 # Set up the cluster plan with the SSH session
 # plan(cluster, workers = rep("SERVER ADDRESS", CORES))
@@ -89,16 +89,41 @@ runs_res$ocd <- ocd_res
 ##### focus0 est ####
 #####################
 
+# 500 data points
 focus0est_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
   y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
   y_tr <- generate_sequence(n = 500, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + sim)
   mu0hat <- rowMeans(y_tr)
   r <- FOCuS_multi_JMLR(y, thresholds$focus0est, mu0 = mu0hat)
   est <- ifelse(r$t == -1, N, r$t)
-  data.frame(sim = sim, magnitude = delta, density = prop, algo = "FOCuS0 (est)", est = est, real = changepoint, N = N)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "FOCuS0 (est 500)", est = est, real = changepoint, N = N)
 }, .progress = T)
 focus0est_res <- focus0est_res %>% reduce(rbind)
 runs_res$focus0est <- focus0est_res
+
+# 250 data points
+focus0est_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+  y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
+  y_tr <- generate_sequence(n = 250, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + sim)
+  mu0hat <- rowMeans(y_tr)
+  r <- FOCuS_multi_JMLR(y, thresholds$focus0est_250, mu0 = mu0hat)
+  est <- ifelse(r$t == -1, N, r$t)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "FOCuS0 (est 250)", est = est, real = changepoint, N = N)
+}, .progress = T)
+focus0est_res <- focus0est_res %>% reduce(rbind)
+runs_res$focus0est_250 <- focus0est_res
+
+# 100 data points
+focus0est_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+  y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
+  y_tr <- generate_sequence(n = 100, p = p, cp = 50, magnitude = 0, dens = 0, seed = 600 + sim)
+  mu0hat <- rowMeans(y_tr)
+  r <- FOCuS_multi_JMLR(y, thresholds$focus0est_100, mu0 = mu0hat)
+  est <- ifelse(r$t == -1, N, r$t)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "FOCuS0 (est 100)", est = est, real = changepoint, N = N)
+}, .progress = T)
+focus0est_res <- focus0est_res %>% reduce(rbind)
+runs_res$focus0est_100 <- focus0est_res
 
 
 ##################
@@ -144,10 +169,35 @@ ocd_est_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, 
   ocd_det <- ocd_training(y_tr, thresholds$ocd_est)
   r <- ocd_detecting(y, ocd_det)
   est <- r$t
-  data.frame(sim = sim, magnitude = delta, density = prop, algo = "ocd (est)", est = est, real = changepoint, N = N)
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "ocd (est 500)", est = est, real = changepoint, N = N)
 }, .progress = T)
 ocd_est_res <- ocd_est_res %>% reduce(rbind)
 runs_res$ocd_est <- ocd_est_res
+
+# ocd est 250
+ocd_est_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+  y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
+  y_tr <- generate_sequence(n = 250, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + sim)
+  ocd_det <- ocd_training(y_tr, thresholds$ocd_est_250)
+  r <- ocd_detecting(y, ocd_det)
+  est <- r$t
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "ocd (est 250)", est = est, real = changepoint, N = N)
+}, .progress = T)
+ocd_est_res <- ocd_est_res %>% reduce(rbind)
+runs_res$ocd_est_250 <- ocd_est_res
+
+# ocd est 100
+ocd_est_res <- future_pmap(sim_grid, .f = function(delta, prop, changepoint, N, sim) {
+  y <- generate_sequence(n = N, p = p, cp = changepoint, magnitude = delta, dens = prop, seed = sim)
+  y_tr <- generate_sequence(n = 100, p = p, cp = 50, magnitude = 0, dens = 0, seed = 600 + sim)
+  ocd_det <- ocd_training(y_tr, thresholds$ocd_est_100)
+  r <- ocd_detecting(y, ocd_det)
+  est <- r$t
+  data.frame(sim = sim, magnitude = delta, density = prop, algo = "ocd (est 100)", est = est, real = changepoint, N = N)
+}, .progress = T)
+ocd_est_res <- ocd_est_res %>% reduce(rbind)
+runs_res$ocd_est_100 <- ocd_est_res
+
 
 
 ### save past runs ###
@@ -157,7 +207,7 @@ save(runs_res, file = file)
 load(file)
 tot_res <- Reduce(rbind, runs_res)
 
-tot_summ <- tot_res %>% mutate(dd = est - 500, density = density * p) %>% 
+tot_summ <- tot_res %>% mutate(dd = est - cp, density = density * p) %>% 
   group_by(magnitude, density, algo) %>%
   summarise(avg_dd = mean(if_else(dd < 0, NA, dd), na.rm = T), fpr = mean(dd<0))
 tot_summ %>% print(n=Inf)
@@ -170,5 +220,5 @@ View(wide_summary)
 (wide_summary %>%
   select(magnitude, density, FOCuS0, "MdFOCuS0_part", "md-FOCuS0", "ocd (ora)")) 
 # known change
-wide_summary %>%
-  select(magnitude, density, FOCuS, "FOCuS0 (est)", "MdFOCuS_part", "md-FOCuS", "ocd (est)")
+ wide_summary %>%
+  select(magnitude, density, "MdFOCuS MR", "ocd (est 250)", "ocd (est 100)")
