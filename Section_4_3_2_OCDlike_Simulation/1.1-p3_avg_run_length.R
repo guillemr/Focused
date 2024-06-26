@@ -278,7 +278,7 @@ mean(md_focus_part_nc) # w\ current threshold 5024
 #####  ocd estimated ##########
 ###############################
 
-ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = y_train_500)
+ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = Y_train_500)
 
 avg_run_len <- 0
 
@@ -288,7 +288,7 @@ while (avg_run_len < target_arl) {
   
   res <- future_map(1:300, function(i) {
     y <- Y_nc[[i]]
-    y_tr <- y_train_500[[i]]
+    y_tr <- Y_train_500[[i]]
     
     ocd_det <- ocd_training(y_tr, ocd_est_thres)
     r <- ocd_detecting(y, ocd_det)
@@ -307,7 +307,7 @@ ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = Y_train_250)
 
 avg_run_len <- 0
 
-q_prob <- .68
+q_prob <- .72
 while (avg_run_len < target_arl) {
   ocd_est_thres <- apply(ocd_stat, 2, quantile, prob = q_prob)
   
