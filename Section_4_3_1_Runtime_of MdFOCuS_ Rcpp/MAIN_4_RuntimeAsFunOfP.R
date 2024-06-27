@@ -17,7 +17,7 @@
 # The test results are saved in files of the following type:              |
 # 'Runtime_alpha_2_beta_1_P_2_FOCuS_gauss_it_100.txt'                     |
 # 'Runtime_alpha_2_beta_1_P_2_FOCuS_poisson_it_100.txt'                   |
-# Time limit: TimeLimit = 3mn                                             |
+# Time limit: TimeLimit = 15mn                                            |
 #-------------------------------------------------------------------------|
 
 #packages----------------------------------------------------------------|
@@ -81,7 +81,7 @@ dim_ <- c(1, 2, 3, 4, 5)
 #number of simulations
 nbSimus_ <- 100
 #Time limit
-TimeLimit <- 180
+TimeLimit <- 900
 #calculations-------------------------------------------------------------|
 for (p in 1 : length(dim_)) {
   for ( t in 1 : length(method)) {
