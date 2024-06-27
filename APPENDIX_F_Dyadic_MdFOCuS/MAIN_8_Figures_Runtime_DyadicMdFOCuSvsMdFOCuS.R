@@ -125,11 +125,11 @@ for (j in  1 : NbMethods) {
 PlotDyadicvsClassic <-  ggplot(test_res, aes(n))+
   ylab("Run time, seconds") +
   xlab("Number of data points of time series, n") +
-  geom_hline(yintercept = 180, linetype = "dotted") +
+  geom_hline(yintercept = 600, linetype = "dotted") +
   scale_x_continuous(breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous(breaks=c(1,5,10,20, 30, 60, 120, 180),  trans = "log10",
-                     labels = c('1','5', '10','20', '30', '60', '120', "180")) +
+  scale_y_continuous(breaks=c(1,5,10, 30, 60, 120,300,600),  trans = "log10",
+                     labels = c('1','5', '10', '30', '60', '120', "300","600")) +
   theme_bw()+
   scale_color_brewer(palette = 'Paired') +
   #Dyadic
@@ -144,17 +144,12 @@ PlotDyadicvsClassic <-  ggplot(test_res, aes(n))+
   geom_line(aes(y = test_res[,2], linetype = "dyadic MdFOCuS0",color = "p = 1")) +
   geom_line(aes(y = test_res[,3], linetype = "dyadic MdFOCuS0",color= "p = 2")) +
   geom_line(aes(y = test_res[,4], linetype = "dyadic MdFOCuS0",color= "p = 3")) +
-#  geom_line(aes(y = test_res[,5], linetype = "dyadic MdFOCuS", color = "p = 1")) +
-#  geom_line(aes(y = test_res[,6], linetype = "dyadic MdFOCuS", color= "p = 2")) +
-#  geom_line(aes(y = test_res[,7], linetype = "dyadic MdFOCuS", color= "p = 3")) +
   #Classic
   geom_line(aes(y = test_res[,8], linetype = "MdFOCuS0",color = "p = 1")) +
   geom_line(aes(y = test_res[,9], linetype = "MdFOCuS0",color= "p = 2")) +
   geom_line(aes(y = test_res[,10], linetype = "MdFOCuS0",color= "p = 3")) +
-#  geom_line(aes(y = test_res[,11], linetype = "MdFOCuS", color = "p = 1")) +
-#  geom_line(aes(y = test_res[,12], linetype = "MdFOCuS", color= "p = 2")) +
-#  geom_line(aes(y = test_res[,13], linetype = "MdFOCuS", color= "p = 3")) +
   labs(colour = "Dimension",  linetype = "Method") + 
+  ggtitle("Run time (in log-scale)")+
   theme(text = element_text(size = 13),
         legend.title = element_text(size = 13),
         legend.text=element_text(size = 13),

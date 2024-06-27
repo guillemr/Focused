@@ -64,7 +64,7 @@ qmin_opt <- c(6, 7, 8)
 #number of simulations
 nbSimus_ <- 100
 #Time limit
-TimeLimit <- 180
+TimeLimit <- 900
 #calculations-------------------------------------------------------------|
 for (p in 1 : length(dim_)) {
   for ( t in 1 : length(method)) {
