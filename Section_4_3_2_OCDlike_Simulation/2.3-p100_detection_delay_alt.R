@@ -17,7 +17,7 @@ REPS <- 300
 # setting parameters
 p <- 100
 N <- 5000
-cp <- 500
+cp <- 1000
 # loading thresholds from past simulations
 load(paste0("Section_4_3_2_OCDlike_Simulation/results/thres", "p", p, "N", N, ".RData"))
 

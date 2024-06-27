@@ -28,13 +28,15 @@ if (file.exists(file)) {
 }
 
 # data with no change (for testing the empirical avg run length)
-Y_nc <- future_map(1:300, function(i) generate_sequence(n = N, p = p, cp = 500, magnitude = 0, dens = 0, seed = i))
+Y_nc <- future_map(1:REPS, function(i) generate_sequence(n = N, p = p, cp = 500, magnitude = 0, dens = 0, seed = i))
 
 # data to estimate the mu0 value
-Y_train <- future_map(1:300, function(i) generate_sequence(n = 500, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + i))
+Y_train_500 <- lapply(1:REPS, function(i) generate_sequence(n = 500, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + i))
+Y_train_250 <- lapply(1:REPS, function(i) generate_sequence(n = 250, p = p, cp = 199, magnitude = 0, dens = 0, seed = 600 + i))
+Y_train_100 <- lapply(1:REPS, function(i) generate_sequence(n = 100, p = p, cp = 50, magnitude = 0, dens = 0, seed = 600 + i))
 
 # data to train the monte-carlo treshold
-Y_monte_carlo <- future_map(1:300, function(i) generate_sequence(n = target_arl + 100, p = p, cp = 500, magnitude = 0, dens = 0, seed = i))
+Y_monte_carlo <- future_map(1:REPS, function(i) generate_sequence(n = target_arl + 100, p = p, cp = 500, magnitude = 0, dens = 0, seed = i))
 
 ### pre-change mean known ###
 
@@ -174,26 +176,27 @@ if (F) {
 ###### FOCUS0 estimated ##########
 ##################################
 if (F) {
+  ### 500 training observations ###
   # tuning the threshold
   focus0est_mc <- future_map(1:REPS, function(i) {
     y <- Y_monte_carlo[[i]]
-    y_tr <- Y_train[[i]]
+    y_tr <- Y_train_500[[i]]
     mu0hat <- rowMeans(y_tr)
     res <- FOCuS_multi_JMLR(y, c(Inf, Inf), mu0 = mu0hat)
     data.frame(max = max(res$maxs), sum = max(res$sums))
   }, .progress = T)
   focus0est_mc <- Reduce(rbind, focus0est_mc)
-  
+
   t_hat <- apply(focus0est_mc, 2, quantile, probs = .46)
   t_multiplier <- cbind(focus0est_mc$max / t_hat["max"], focus0est_mc$sum / t_hat["sum"]) %>%
     apply(1, max) %>%
     quantile(probs = .46)
   thresholds$focus0est <- t_hat * t_multiplier
-  
+
   # evaluating the empirical run length
   focus0est_nc <- future_map(1:REPS, function(i) {
     y <- Y_nc[[i]]
-    y_tr <- Y_train[[i]]
+    y_tr <- Y_train_500[[i]]
     mu0hat <- rowMeans(y_tr)
     res <- FOCuS_multi_JMLR(y, thresholds$focus0est, mu0 = mu0hat)
     res$t
@@ -201,7 +204,67 @@ if (F) {
   focus0est_nc <- focus0est_nc %>% unlist
   focus0est_nc[focus0est_nc == -1] <- N
   mean(focus0est_nc) # w\ current threshold 5028
-  
+
+
+  ### 250 training observations ###
+  # tuning the threshold
+  focus0est_mc <- future_map(1:REPS, function(i) {
+    y <- Y_monte_carlo[[i]]
+    y_tr <- Y_train_250[[i]]
+    mu0hat <- rowMeans(y_tr)
+    res <- FOCuS_multi_JMLR(y, c(Inf, Inf), mu0 = mu0hat)
+    data.frame(max = max(res$maxs), sum = max(res$sums))
+  }, .progress = T)
+  focus0est_mc <- Reduce(rbind, focus0est_mc)
+
+  t_hat <- apply(focus0est_mc, 2, quantile, probs = .45)
+  t_multiplier <- cbind(focus0est_mc$max / t_hat["max"], focus0est_mc$sum / t_hat["sum"]) %>%
+    apply(1, max) %>%
+    quantile(probs = .41)
+  thresholds$focus0est_250 <- t_hat * t_multiplier
+
+  # evaluating the empirical run length
+  focus0est_nc <- future_map(1:REPS, function(i) {
+    y <- Y_nc[[i]]
+    y_tr <- Y_train_250[[i]]
+    mu0hat <- rowMeans(y_tr)
+    res <- FOCuS_multi_JMLR(y, thresholds$focus0est_250, mu0 = mu0hat)
+    res$t
+  }, .progress = T)
+  focus0est_nc <- focus0est_nc %>% unlist
+  focus0est_nc[focus0est_nc == -1] <- N
+  mean(focus0est_nc) # w\ current threshold 5049
+
+
+  ### 100 training observations ###
+  # tuning the threshold
+  focus0est_mc <- future_map(1:REPS, function(i) {
+    y <- Y_monte_carlo[[i]]
+    y_tr <- Y_train_100[[i]]
+    mu0hat <- rowMeans(y_tr)
+    res <- FOCuS_multi_JMLR(y, c(Inf, Inf), mu0 = mu0hat)
+    data.frame(max = max(res$maxs), sum = max(res$sums))
+  }, .progress = T)
+  focus0est_mc <- Reduce(rbind, focus0est_mc)
+
+  t_hat <- apply(focus0est_mc, 2, quantile, probs = .42)
+  t_multiplier <- cbind(focus0est_mc$max / t_hat["max"], focus0est_mc$sum / t_hat["sum"]) %>%
+    apply(1, max) %>%
+    quantile(probs = .42)
+  thresholds$focus0est_100 <- t_hat * t_multiplier
+
+  # evaluating the empirical run length
+  focus0est_nc <- future_map(1:REPS, function(i) {
+    y <- Y_nc[[i]]
+    y_tr <- Y_train_100[[i]]
+    mu0hat <- rowMeans(y_tr)
+    res <- FOCuS_multi_JMLR(y, thresholds$focus0est_100, mu0 = mu0hat)
+    res$t
+  }, .progress = T)
+  focus0est_nc <- focus0est_nc %>% unlist
+  focus0est_nc[focus0est_nc == -1] <- N
+  mean(focus0est_nc) # w\ current threshold 5049
+
 }
 
 ####################
@@ -310,8 +373,8 @@ if (F) {
 ###############################
 #####  ocd estimated ##########
 ###############################
-if(F) {
-ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = Y_train)
+
+ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = Y_train_500)
 
 avg_run_len <- 0
 
@@ -321,7 +384,7 @@ while (avg_run_len < target_arl) {
   
   res <- future_map(1:300, function(i) {
     y <- Y_nc[[i]]
-    y_tr <- Y_train[[i]]
+    y_tr <- Y_train_500[[i]]
     
     ocd_det <- ocd_training(y_tr, ocd_est_thres)
     r <- ocd_detecting(y, ocd_det)
@@ -333,7 +396,56 @@ while (avg_run_len < target_arl) {
 }
 
 thresholds$ocd_est <- ocd_est_thres # 6048.23
+
+### 250 training observations ###
+
+ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = Y_train_250)
+
+avg_run_len <- 0
+
+q_prob <- .72
+while (avg_run_len < target_arl) {
+  ocd_est_thres <- apply(ocd_stat, 2, quantile, prob = q_prob)
+  
+  res <- future_map(1:300, function(i) {
+    y <- Y_nc[[i]]
+    y_tr <- Y_train_250[[i]]
+    
+    ocd_det <- ocd_training(y_tr, ocd_est_thres)
+    r <- ocd_detecting(y, ocd_det)
+    r$t
+  }, .progress = T)
+  avg_run_len <- mean(unlist(res))
+  print(avg_run_len)
+  q_prob <- min(1, q_prob + 0.1)
 }
+
+thresholds$ocd_est_250 <- ocd_est_thres
+
+### 100 training observations ###
+
+ocd_stat <- MC_ocd_v6(Y_monte_carlo, 1, "auto", training_data = Y_train_100)
+
+avg_run_len <- 0
+
+q_prob <- .68
+while (avg_run_len < target_arl) {
+  ocd_est_thres <- apply(ocd_stat, 2, quantile, prob = q_prob)
+  
+  res <- future_map(1:300, function(i) {
+    y <- Y_nc[[i]]
+    y_tr <- Y_train_100[[i]]
+    
+    ocd_det <- ocd_training(y_tr, ocd_est_thres)
+    r <- ocd_detecting(y, ocd_det)
+    r$t
+  }, .progress = T)
+  avg_run_len <- mean(unlist(res))
+  print(avg_run_len)
+  q_prob <- min(1, q_prob + 0.1)
+}
+
+thresholds$ocd_est_100 <- ocd_est_thres
 
 
 ################################
