@@ -111,24 +111,25 @@ Plot2 <-  ggplot(test_res, aes(n))+
   geom_point(aes(y = test_res[,6],color = "p = 5"), shape = 1, size=2) +
   ylab("Run time, seconds") +
   xlab("Number of data points of time series, n") +
-  geom_hline(yintercept = 180, linetype = "dotted") +
+  geom_hline(yintercept = 600, linetype = "dotted") +
   scale_x_continuous(breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous(breaks=c(1,5,10,20, 30, 60, 120, 180),  trans = "log10",
-                     labels = c('1','5', '10','20', '30', '60', '120', "180")) +
+  scale_y_continuous(breaks=c(1,5,10, 30, 60, 120,300,600),  trans = "log10",
+                     labels = c('1','5', '10', '30', '60', '120', "300","600")) +
   theme_bw()+
   scale_color_brewer(palette = 'Paired') +
-  geom_line(aes(y = test_res[,2], linetype = "MdFOCuS0",color = "p = 1")) +
-  geom_line(aes(y = test_res[,3], linetype = "MdFOCuS0",color= "p = 2")) +
-  geom_line(aes(y = test_res[,4], linetype = "MdFOCuS0",color= "p = 3")) +
-  geom_line(aes(y = test_res[,5], linetype = "MdFOCuS0",color= "p = 4")) +
-  geom_line(aes(y = test_res[,6], linetype = "MdFOCuS0",color= "p = 5")) +
-  geom_line(aes(y = test_res[,7], linetype = "MdFOCuS", color = "p = 1")) +
-  geom_line(aes(y = test_res[,8], linetype = "MdFOCuS", color= "p = 2")) +
-  geom_line(aes(y = test_res[,9], linetype = "MdFOCuS", color= "p = 3")) +
-  geom_line(aes(y = test_res[,10], linetype = "MdFOCuS", color= "p = 4")) +
-  geom_line(aes(y = test_res[,11], linetype = "MdFOCuS", color= "p = 5")) +
-  labs(colour = "Dimension",  linetype = "Method") + 
+  geom_line(aes(y = test_res[,2], linetype = "\U03B7\U2081 is known",color = "p = 1")) +
+  geom_line(aes(y = test_res[,3], linetype = "\U03B7\U2081 is known",color= "p = 2")) +
+  geom_line(aes(y = test_res[,4], linetype = "\U03B7\U2081 is known",color= "p = 3")) +
+  geom_line(aes(y = test_res[,5], linetype = "\U03B7\U2081 is known",color= "p = 4")) +
+  geom_line(aes(y = test_res[,6], linetype = "\U03B7\U2081 is known",color= "p = 5")) +
+  geom_line(aes(y = test_res[,7], linetype = "\U03B7\U2081 is unknown", color = "p = 1")) +
+  geom_line(aes(y = test_res[,8], linetype = "\U03B7\U2081 is unknown", color= "p = 2")) +
+  geom_line(aes(y = test_res[,9], linetype = "\U03B7\U2081 is unknown", color= "p = 3")) +
+  geom_line(aes(y = test_res[,10], linetype = "\U03B7\U2081 is unknown", color= "p = 4")) +
+  geom_line(aes(y = test_res[,11], linetype = "\U03B7\U2081 is unknown", color= "p = 5")) +
+  labs(colour = "Dimension",  linetype = "MdFOCuS") + 
+  ggtitle("Run time (in log-scale)")+
   theme(text = element_text(size = 13),
         legend.title = element_text(size = 13),
         legend.text=element_text(size = 13),
@@ -145,7 +146,7 @@ for (i in 1:10){
 
 alpha <- unlist(alpha)
 alpha <- as.vector(alpha,'numeric')
-#1.038808 1.157248 1.222801 1.245924 1.137845 1.045247 1.158712 1.228089 1.244636 1.140385
+#1.004830 1.115405 1.177235 1.187659 1.135886 1.001271 1.116458 1.182977 1.192535 1.139330
 #save---------------------------------------------------------------------|
 pdf(file = "figures/Figure_Gaussian_Model_Runtime.pdf",  width = 6, height = 4)
 print(Plot2)
@@ -207,24 +208,25 @@ Plot3 <-  ggplot(test_res, aes(n)) +
   geom_point(aes(y = test_res[,6],color = "p = 5"), shape = 1, size=2) +
   ylab("Run time, seconds") +
   xlab("Number of data points of time series, n") +
-  geom_hline(yintercept = 180, linetype = "dotted") +
+  geom_hline(yintercept = 600, linetype = "dotted") +
   scale_x_continuous(breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous(breaks=c(1,5,10,20, 30, 60, 120, 180),  trans = "log10",
-                     labels = c('1','5', '10','20', '30', '60', '120', "180")) +
+  scale_y_continuous(breaks=c(1,5,10, 30, 60, 120,300,600),  trans = "log10",
+                     labels = c('1','5', '10', '30', '60', '120', "300","600")) +
   theme_bw()+
   scale_color_brewer(palette = 'Paired') +
-  geom_line(aes(y = test_res[,2], linetype = "MdFOCuS0",color = "p = 1")) +
-  geom_line(aes(y = test_res[,3], linetype = "MdFOCuS0",color= "p = 2")) +
-  geom_line(aes(y = test_res[,4], linetype = "MdFOCuS0",color= "p = 3")) +
-  geom_line(aes(y = test_res[,5], linetype = "MdFOCuS0",color= "p = 4")) +
-  geom_line(aes(y = test_res[,6], linetype = "MdFOCuS0",color= "p = 5")) +
-  geom_line(aes(y = test_res[,7], linetype = "MdFOCuS", color = "p = 1")) +
-  geom_line(aes(y = test_res[,8], linetype = "MdFOCuS",color= "p = 2")) +
-  geom_line(aes(y = test_res[,9], linetype = "MdFOCuS",color= "p = 3")) +
-  geom_line(aes(y = test_res[,10], linetype = "MdFOCuS",color= "p = 4")) +
-  geom_line(aes(y = test_res[,11], linetype = "MdFOCuS",color= "p = 5")) +
-  labs(colour = "Dimension",  linetype = "Method") +
+  geom_line(aes(y = test_res[,2], linetype = "\U03B7\U2081 is known",color = "p = 1")) +
+  geom_line(aes(y = test_res[,3], linetype = "\U03B7\U2081 is known",color= "p = 2")) +
+  geom_line(aes(y = test_res[,4], linetype = "\U03B7\U2081 is known",color= "p = 3")) +
+  geom_line(aes(y = test_res[,5], linetype = "\U03B7\U2081 is known",color= "p = 4")) +
+  geom_line(aes(y = test_res[,6], linetype = "\U03B7\U2081 is known",color= "p = 5")) +
+  geom_line(aes(y = test_res[,7], linetype = "\U03B7\U2081 is unknown", color = "p = 1")) +
+  geom_line(aes(y = test_res[,8], linetype = "\U03B7\U2081 is unknown",color= "p = 2")) +
+  geom_line(aes(y = test_res[,9], linetype = "\U03B7\U2081 is unknown",color= "p = 3")) +
+  geom_line(aes(y = test_res[,10], linetype = "\U03B7\U2081 is unknown",color= "p = 4")) +
+  geom_line(aes(y = test_res[,11], linetype = "\U03B7\U2081 is unknown",color= "p = 5")) +
+  labs(colour = "Dimension",  linetype = "MdFOCuS") +
+  ggtitle("Run time (in log-scale)")+
   theme(text = element_text(size = 13),
         legend.title = element_text(size = 13),
         legend.text=element_text(size = 13),
@@ -249,10 +251,7 @@ for (i in 1:10){
 alpha <- unlist(alpha)
 alpha <- as.vector(alpha,'numeric')
 alpha 
-# [1] 1.044838 1.161654 1.244333 1.259823 1.163840 1.057966 1.182293 1.264088
-#[9] 1.286759 1.193310
+#[1] 1.013903 1.124910 1.194553 1.206708 1.191581 1.017761 1.138635 1.216389 1.233858 1.186221
 ################################################################################
 ########################### END ################################################
 ################################################################################
-
-
