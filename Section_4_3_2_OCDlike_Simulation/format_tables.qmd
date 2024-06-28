@@ -533,8 +533,8 @@ load(file)
 ```{r}
 tot_res <- Reduce(rbind, runs_res) %>%
   mutate(algo = recode(algo,
-   "MdFOCuS0 MR" = "MdFOCuS Sp",
-   "MdFOCuS MR" = "MdFOCuS0 Sp",
+   "MdFOCuS0 MR" = "MdFOCuS0 Sp",
+   "MdFOCuS MR" = "MdFOCuS Sp",
    "FOCuS0_alt" = "FOCuS0")
    )
 
