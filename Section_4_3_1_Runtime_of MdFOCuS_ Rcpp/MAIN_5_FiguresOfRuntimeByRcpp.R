@@ -61,17 +61,19 @@ dev.off()
 ##   Figure Runtime as the function of p. Gaussian Model                      ##                         
 ################################################################################
 #parameters---------------------------------------------------------------|
-Dim <- c (1, 2, 3, 4, 5)
+Dim <- c (1, 2, 3, 4, 5, 6)
 nameDim <- c("MdFOCuS0 (p = 1)",
              "MdFOCuS0 (p = 2)",
              "MdFOCuS0 (p = 3)",
              "MdFOCuS0 (p = 4)",
              "MdFOCuS0 (p = 5)",
+             "MdFOCuS0 (p = 6)",
              "MdFOCuS (p = 1)",
              "MdFOCuS (p = 2)",
              "MdFOCuS (p = 3)",
              "MdFOCuS (p = 4)",
-             "MdFOCuS (p = 5)")
+             "MdFOCuS (p = 5)",
+             "MdFOCuS (p = 6)")
 
 Methods <- c("FOCuS0", "FOCuS")
 
@@ -109,13 +111,14 @@ Plot2 <-  ggplot(test_res, aes(n))+
   geom_point(aes(y = test_res[,4],color = "p = 3"), shape = 1, size=2) +
   geom_point(aes(y = test_res[,5],color = "p = 4"), shape = 1, size=2) +
   geom_point(aes(y = test_res[,6],color = "p = 5"), shape = 1, size=2) +
+  geom_point(aes(y = test_res[,7],color = "p = 6"), shape = 1, size=2) +
   ylab("Run time, seconds") +
   xlab("Number of data points of time series, n") +
-  geom_hline(yintercept = 600, linetype = "dotted") +
+  geom_hline(yintercept = 1200, linetype = "dotted") +
   scale_x_continuous(breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous(breaks=c(1,5,10, 30, 60, 120,300,600),  trans = "log10",
-                     labels = c('1','5', '10', '30', '60', '120', "300","600")) +
+  scale_y_continuous(breaks=c(1,5,10, 30, 60, 120,300,600,1200),  trans = "log10",
+                     labels = c('1','5', '10', '30', '60', '120', "300","600","1200")) +
   theme_bw()+
   scale_color_brewer(palette = 'Paired') +
   geom_line(aes(y = test_res[,2], linetype = "\U03B7\U2081 is known",color = "p = 1")) +
@@ -123,11 +126,13 @@ Plot2 <-  ggplot(test_res, aes(n))+
   geom_line(aes(y = test_res[,4], linetype = "\U03B7\U2081 is known",color= "p = 3")) +
   geom_line(aes(y = test_res[,5], linetype = "\U03B7\U2081 is known",color= "p = 4")) +
   geom_line(aes(y = test_res[,6], linetype = "\U03B7\U2081 is known",color= "p = 5")) +
-  geom_line(aes(y = test_res[,7], linetype = "\U03B7\U2081 is unknown", color = "p = 1")) +
-  geom_line(aes(y = test_res[,8], linetype = "\U03B7\U2081 is unknown", color= "p = 2")) +
-  geom_line(aes(y = test_res[,9], linetype = "\U03B7\U2081 is unknown", color= "p = 3")) +
-  geom_line(aes(y = test_res[,10], linetype = "\U03B7\U2081 is unknown", color= "p = 4")) +
-  geom_line(aes(y = test_res[,11], linetype = "\U03B7\U2081 is unknown", color= "p = 5")) +
+  geom_line(aes(y = test_res[,7], linetype = "\U03B7\U2081 is known",color= "p = 6")) +
+  geom_line(aes(y = test_res[,8], linetype = "\U03B7\U2081 is unknown", color = "p = 1")) +
+  geom_line(aes(y = test_res[,9], linetype = "\U03B7\U2081 is unknown", color= "p = 2")) +
+  geom_line(aes(y = test_res[,10], linetype = "\U03B7\U2081 is unknown", color= "p = 3")) +
+  geom_line(aes(y = test_res[,11], linetype = "\U03B7\U2081 is unknown", color= "p = 4")) +
+  geom_line(aes(y = test_res[,12], linetype = "\U03B7\U2081 is unknown", color= "p = 5")) +
+  geom_line(aes(y = test_res[,13], linetype = "\U03B7\U2081 is unknown", color= "p = 6")) +
   labs(colour = "Dimension",  linetype = "MdFOCuS") + 
   ggtitle("Run time (in log-scale)")+
   theme(text = element_text(size = 13),
@@ -146,7 +151,9 @@ for (i in 1:10){
 
 alpha <- unlist(alpha)
 alpha <- as.vector(alpha,'numeric')
-#1.004830 1.115405 1.177235 1.187659 1.135886 1.001271 1.116458 1.182977 1.192535 1.139330
+# P=       1        2       3       4         5       6     
+#     1.004549 1.115585 1.179658 1.196108 1.143118 1.201544 
+#     1.006225 1.118467 1.182693 1.201839 1.143913 1.197309
 #save---------------------------------------------------------------------|
 pdf(file = "figures/Figure_Gaussian_Model_Runtime.pdf",  width = 6, height = 4)
 print(Plot2)
@@ -157,17 +164,19 @@ dev.off()
 ################################################################################
 
 #parameters---------------------------------------------------------------|
-Dim <- c (1, 2, 3, 4, 5)
+Dim <- c (1, 2, 3, 4, 5, 6)
 nameDim <- c("MdFOCuS0 (p = 1)",
              "MdFOCuS0 (p = 2)",
              "MdFOCuS0 (p = 3)",
              "MdFOCuS0 (p = 4)",
              "MdFOCuS0 (p = 5)",
+             "MdFOCuS0 (p = 6)",
              "MdFOCuS (p = 1)",
              "MdFOCuS (p = 2)",
              "MdFOCuS (p = 3)",
              "MdFOCuS (p = 4)",
-             "MdFOCuS (p = 5)")
+             "MdFOCuS (p = 5)",
+             "MdFOCuS (p = 6)")
 
 Methods <- c("FOCuS0", "FOCuS")
 
@@ -206,13 +215,14 @@ Plot3 <-  ggplot(test_res, aes(n)) +
   geom_point(aes(y = test_res[,4],color = "p = 3"), shape = 1, size=2) +
   geom_point(aes(y = test_res[,5],color = "p = 4"), shape = 1, size=2) +
   geom_point(aes(y = test_res[,6],color = "p = 5"), shape = 1, size=2) +
+  geom_point(aes(y = test_res[,7],color = "p = 6"), shape = 1, size=2) +
   ylab("Run time, seconds") +
   xlab("Number of data points of time series, n") +
-  geom_hline(yintercept = 600, linetype = "dotted") +
+  geom_hline(yintercept = 1200, linetype = "dotted") +
   scale_x_continuous(breaks=c(2^10,2^11,2^12,2^13, 2^14, 2^15, 2^16, 2^17,2^18,2^19,2^20,2^21,2^22,2^23),  trans = "log10",
                      labels = scales::math_format(2^.x, format = log2))+
-  scale_y_continuous(breaks=c(1,5,10, 30, 60, 120,300,600),  trans = "log10",
-                     labels = c('1','5', '10', '30', '60', '120', "300","600")) +
+  scale_y_continuous(breaks=c(1,5,10, 30, 60, 120,300,600, 1200),  trans = "log10",
+                     labels = c('1','5', '10', '30', '60', '120', "300","600", "1200")) +
   theme_bw()+
   scale_color_brewer(palette = 'Paired') +
   geom_line(aes(y = test_res[,2], linetype = "\U03B7\U2081 is known",color = "p = 1")) +
@@ -220,11 +230,13 @@ Plot3 <-  ggplot(test_res, aes(n)) +
   geom_line(aes(y = test_res[,4], linetype = "\U03B7\U2081 is known",color= "p = 3")) +
   geom_line(aes(y = test_res[,5], linetype = "\U03B7\U2081 is known",color= "p = 4")) +
   geom_line(aes(y = test_res[,6], linetype = "\U03B7\U2081 is known",color= "p = 5")) +
-  geom_line(aes(y = test_res[,7], linetype = "\U03B7\U2081 is unknown", color = "p = 1")) +
-  geom_line(aes(y = test_res[,8], linetype = "\U03B7\U2081 is unknown",color= "p = 2")) +
-  geom_line(aes(y = test_res[,9], linetype = "\U03B7\U2081 is unknown",color= "p = 3")) +
-  geom_line(aes(y = test_res[,10], linetype = "\U03B7\U2081 is unknown",color= "p = 4")) +
-  geom_line(aes(y = test_res[,11], linetype = "\U03B7\U2081 is unknown",color= "p = 5")) +
+  geom_line(aes(y = test_res[,7], linetype = "\U03B7\U2081 is known",color= "p = 6")) +
+  geom_line(aes(y = test_res[,8], linetype = "\U03B7\U2081 is unknown", color = "p = 1")) +
+  geom_line(aes(y = test_res[,9], linetype = "\U03B7\U2081 is unknown",color= "p = 2")) +
+  geom_line(aes(y = test_res[,10], linetype = "\U03B7\U2081 is unknown",color= "p = 3")) +
+  geom_line(aes(y = test_res[,11], linetype = "\U03B7\U2081 is unknown",color= "p = 4")) +
+  geom_line(aes(y = test_res[,12], linetype = "\U03B7\U2081 is unknown",color= "p = 5")) +
+  geom_line(aes(y = test_res[,13], linetype = "\U03B7\U2081 is unknown",color= "p = 6")) +
   labs(colour = "Dimension",  linetype = "MdFOCuS") +
   ggtitle("Run time (in log-scale)")+
   theme(text = element_text(size = 13),
@@ -243,7 +255,7 @@ logtest_res <- log10(test_res)
 #regression---------------------------------------------------------------|
 regres<-list()
 alpha<-list()
-for (i in 1:10){
+for (i in 1:12){
   regres[[i]]<- lm(logtest_res[, i+1] ~ logtest_res[, 1])
   alpha[[i]]<-regres[[i]]$coefficients[2]
 }
@@ -251,7 +263,9 @@ for (i in 1:10){
 alpha <- unlist(alpha)
 alpha <- as.vector(alpha,'numeric')
 alpha 
-#[1] 1.013903 1.124910 1.194553 1.206708 1.191581 1.017761 1.138635 1.216389 1.233858 1.186221
+# P=       1        2       3       4         5       6     
+#    1.013261 1.126261 1.192440 1.210478 1.172368 1.249825
+#    1.017782 1.138046 1.212610 1.239983 1.190441 1.253617
 ################################################################################
 ########################### END ################################################
 ################################################################################

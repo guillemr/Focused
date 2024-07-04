@@ -17,7 +17,7 @@
 # The test results are saved in files of the following type:              |
 # 'Runtime_alpha_2_beta_1_P_2_FOCuS_gauss_it_100.txt'                     |
 # 'Runtime_alpha_2_beta_1_P_2_FOCuS_poisson_it_100.txt'                   |
-# Time limit: TimeLimit = 15mn                                            |
+# Time limit: TimeLimit = 20mn                                            |
 #-------------------------------------------------------------------------|
 
 #packages----------------------------------------------------------------|
@@ -77,11 +77,11 @@ cost = c("gauss", "poisson")
 #parameters---------------------------------------------------------------|
 degree <- 10:23
 n_ <-2^(degree)
-dim_ <- c(1, 2, 3, 4, 5)
+dim_ <- c(1, 2, 3, 4, 5, 6)
 #number of simulations
 nbSimus_ <- 100
 #Time limit
-TimeLimit <- 900
+TimeLimit <- 2400  #(20mn*2)
 #calculations-------------------------------------------------------------|
 for (p in 1 : length(dim_)) {
   for ( t in 1 : length(method)) {
@@ -99,7 +99,7 @@ for (p in 1 : length(dim_)) {
                                           Cost_ = cost[cst],
                                           Beta_ = 1,
                                           Alpha_ = 2
-          ), mc.cores = 100)) #CHANGE FOR YOUR PC
+          ), mc.cores = 30)) #CHANGE FOR YOUR PC
         Time <- max(TableOfRuntime[index , ])
         index <- index + 1
       }
