@@ -121,7 +121,7 @@ dim_ <- 1 : 5
 #number of simulations
 nbSimus_ <- 100
 #Time limit
-TimeLimit <- 600
+TimeLimit <- 2400# 40 min
 
 cost <- c ('gauss','poisson')
 mean <- c(0,1)
